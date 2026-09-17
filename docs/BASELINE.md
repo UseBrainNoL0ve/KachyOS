@@ -18,15 +18,17 @@ The scanner is intentionally read-only. It does not install packages, change fir
 
 ## Local usage
 
-From the repository root:
+The workstation is designed to run natively on CachyOS rather than requiring a persistent project-local Python virtual environment. For development, use the repository's native package/build workflow or an isolated CI environment.
+
+Typical installed usage:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e .
-python -m unittest discover -s tests
 kachysec baseline --output reports/baseline.md
 kachysec baseline --format json --output reports/baseline.json
 ```
 
-Reports are local diagnostics and should be reviewed before any host-changing automation is introduced.
+Run the test suite from a development checkout with the project's configured Python tooling.
+
+## Privacy
+
+Baseline reports can contain local IP addresses, hostnames, mount paths, socket information and other host-specific metadata. Keep reports local by default and redact sensitive details before sharing or committing anything publicly.
