@@ -23,9 +23,15 @@ A modular cybersecurity workstation layer built on top of CachyOS.
 - `docs/` — architecture, setup and learning notes
 - `tests/` — automated tests
 
+## Current status
+
+The project already has a read-only host baseline collector and a broad tool-universe catalog. The catalog covers network, web, vulnerability assessment, OSINT, forensics, reverse engineering, password auditing, wireless, lab infrastructure, observability and analysis utilities.
+
+The workstation is designed to run directly on the CachyOS host. A native Arch/CachyOS `PKGBUILD` is included for the eventual system installation path; the project does not require a local Python virtual environment.
+
 ## Security scope
 
-Automation is designed for systems and environments the user owns or is explicitly authorized to test. The project intentionally avoids destructive or unauthorized attack automation.
+Automation is designed for systems and environments the user owns or is explicitly authorized to test. The catalog does not imply that every tool should be installed or used against arbitrary systems.
 
 ## Roadmap
 
