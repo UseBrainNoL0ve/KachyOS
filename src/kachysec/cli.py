@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from .audit import collect_audit, render_audit
 from .baseline import collect, to_json, to_markdown
 from .status import collect_status, render_status
 from .tools import check_tools
@@ -20,6 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     baseline.add_argument("--output", type=Path, help="Write the report to a file")
 
     subparsers.add_parser("status", help="Show workstation health and tool summary")
+    subparsers.add_parser("audit", help="Run a read-only security posture audit")
 
     tools = subparsers.add_parser("tools", help="List security tool presence")
     tools.add_argument("--missing", action="store_true", help="Show only missing tools")
@@ -44,6 +46,10 @@ def main() -> int:
 
     if args.command == "status":
         print(render_status(collect_status()), end="")
+        return 0
+
+    if args.command == "audit":
+        print(render_audit(collect_audit()), end="")
         return 0
 
     if args.command == "tools":
