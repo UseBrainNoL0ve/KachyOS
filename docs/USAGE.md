@@ -8,16 +8,17 @@
 | `status` | Summarize tools and runtimes | No |
 | `audit` | Review basic security posture | No |
 | `updates` | Show pending pacman updates | No |
+| `telemetry` | Show local defensive telemetry | No |
 | `tools` | Browse the security tool catalog | No |
 | `tools --missing` | Show missing tools | No |
 | `tools --category network` | Filter a discipline | No |
 | `tools --plan` | Build a package installation plan | No |
+| `tools --install` | Install the reviewed package plan after confirmation | **Yes** |
 | `lab` | Inspect lab runtimes/definitions | No |
+| `lab --plan` | Build a review-only lab lifecycle plan | No |
 | `gui` | Launch the desktop dashboard | No |
 
 ## Baseline
-
-Use a Markdown report when you want a human-readable snapshot:
 
 ```bash
 kachysec baseline --format markdown --output reports/baseline.md
@@ -29,53 +30,63 @@ Use JSON for automation:
 kachysec baseline --format json --output reports/baseline.json
 ```
 
-## Tool catalog
+Baseline output can contain host-specific information. Keep reports local unless they have been reviewed and redacted.
 
-Start broad:
+## Tool catalog
 
 ```bash
 kachysec tools
-```
-
-Narrow it down:
-
-```bash
 kachysec tools --category web
-kachysec tools --category reverse
 kachysec tools --missing
 ```
 
-The catalog is metadata and discovery. It does not imply that every tool is appropriate for every machine.
+The catalog is metadata and discovery. It does not imply that every tool is appropriate for every machine or authorized for every target.
 
-## Installation planning
+## Installation planning and execution
+
+Preview the exact package plan:
 
 ```bash
 kachysec tools --plan
 ```
 
-The command resolves locally available pacman candidates and prints a deduplicated plan. It does not execute installation.
+If an installation is intentionally required:
 
-The intended lifecycle is:
+```bash
+kachysec tools --install
+```
 
-**discover → inspect → plan → explicit confirmation → privileged install → verify**
+The lifecycle is:
 
-This separation keeps package changes auditable and prevents accidental bulk installation.
+**discover → inspect → resolve → plan → review → explicit confirmation → privileged install → verify**
 
-## Audit
+The explicit operation is logged locally.
+
+## Audit and updates
 
 ```bash
 kachysec audit
+kachysec updates
 ```
 
-The audit checks basic firewall state, pending updates, failed systemd units, SSH state, lab runtimes and selected sensitive-file permissions. It is a lightweight posture check, not a replacement for a full security assessment.
+The audit is a lightweight posture check, not a replacement for a full security assessment. Updates are inspection-only; KachySec does not run `pacman -Syu` through the update service.
+
+## Telemetry
+
+```bash
+kachysec telemetry
+```
+
+Telemetry observes local load, memory, listening sockets, and process count. It does not perform remote probing or remediation.
 
 ## Lab manager
 
 ```bash
 kachysec lab
+kachysec lab --plan
 ```
 
-The lab manager only discovers available container/VM runtimes and local lab definitions. Future lab automation will target isolated environments that the user owns or is authorized to operate.
+The lab manager discovers runtimes and local definitions. The current lifecycle planner is review-only.
 
 ## GUI
 
@@ -83,14 +94,4 @@ The lab manager only discovers available container/VM runtimes and local lab def
 kachysec gui
 ```
 
-The dashboard provides:
-
-- live 10-second refresh;
-- tool search and filtering;
-- selected-tool details;
-- package-candidate inspection;
-- installation-plan preview;
-- audit and update panels;
-- lab-runtime visibility.
-
-GUI actions that change the system should remain explicit and reviewable.
+The dashboard provides live refresh, tool search/filtering, package-candidate inspection, install-plan preview, audit/update panels, lab visibility, telemetry, and local operation history.
