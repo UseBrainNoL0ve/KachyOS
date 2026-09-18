@@ -1,6 +1,6 @@
 # Lab Manager
 
-KachySec treats local labs as a separate security boundary.
+KachySec treats local security labs as a separate boundary from the host workstation.
 
 ## Runtime discovery
 
@@ -12,22 +12,35 @@ The current lab manager detects:
 - libvirt
 - virt-manager
 
-It does not start, stop, create, delete or network containers/VMs. The new `kachysec lab --plan` command only produces a reviewable lifecycle plan.
+It does not currently create, start, stop, delete, or reconfigure containers or virtual machines.
 
-## Architecture
+## Review-only lab plans
 
-The intended lab lifecycle is:
+`kachysec lab --plan` converts discovered lab definitions into a reviewable lifecycle plan containing:
+
+- lab name;
+- runtime kind;
+- local path;
+- declared network boundary;
+- planned action.
+
+The current action is intentionally `review-only`.
+
+## Intended lifecycle
+
+The future execution layer should follow:
 
 1. discover runtime capabilities;
-2. validate a lab definition;
-3. show the resources and network boundaries;
-4. ask for explicit confirmation;
-5. create/start the isolated environment only after a separate explicit execution action;
+2. validate the lab definition;
+3. show resources and network boundaries;
+4. require explicit confirmation;
+5. create/start the isolated environment;
 6. run authorized training exercises;
 7. collect results;
-8. tear the environment down.
+8. verify the environment state;
+9. tear the environment down.
 
-Training targets should be local, isolated and intentionally owned/authorized.
+Training targets should be local, isolated, intentionally owned, and explicitly authorized.
 
 ## Directory layout
 
@@ -39,4 +52,4 @@ labs/
 └── vms/
 ```
 
-The first implementation deliberately stops at discovery so the lifecycle can be reviewed before privileged or network-affecting automation is introduced.
+The current implementation deliberately stops before lifecycle execution so network-affecting and privileged behavior can be reviewed separately.
