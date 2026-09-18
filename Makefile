@@ -25,3 +25,6 @@ updates:
 
 lab:
 	kachysec lab
+
+telemetry:
+	kachysec telemetry
