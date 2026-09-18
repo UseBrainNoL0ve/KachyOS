@@ -1,29 +1,50 @@
 # Tool Manager
 
-The tool manager is intentionally split into inspection and execution.
+The Tool Manager connects KachySec's security-tool catalog to the native pacman package manager without turning catalog inspection into implicit installation.
 
 ## Current capabilities
 
 - Inspect native pacman package candidates.
 - Detect whether candidate packages are installed.
-- Build a deduplicated installation plan.
-- Render the plan without modifying the host.
+- Resolve locally available candidates in a batched planning operation.
+- Deduplicate package names across the catalog.
+- Render an exact installation plan without modifying the host.
+- Feed the same plan into the explicit package-operation layer.
 
-## Safety boundary
+## CLI
 
-The current implementation does not execute package installation.
+Preview a plan:
 
-The intended workflow is:
+```bash
+kachysec tools --plan
+```
 
-1. inspect the selected tool metadata;
-2. resolve native package candidates;
-3. show the exact package plan;
-4. require explicit confirmation;
-5. perform a privileged package operation;
-6. verify the resulting tool state.
+Execute a reviewed plan:
 
-This prevents a GUI refresh or accidental click from becoming an implicit system modification.
+```bash
+kachysec tools --install
+```
+
+The install command prints the exact package list and requires the literal confirmation token `INSTALL` before running:
+
+```text
+sudo pacman -S --needed <packages...>
+```
+
+The operation is recorded in local JSONL state after it finishes.
 
 ## GUI integration
 
-The same manager API is intended for the future Tool Manager panel. The GUI should show package candidates, installation state, and the exact proposed operation before any privileged action is introduced.
+The GUI can inspect individual tool metadata and build a complete installation plan. The GUI itself does not execute package installation.
+
+## Lifecycle
+
+The intended package lifecycle is:
+
+**discover → inspect → resolve candidates → exact plan → review → explicit confirmation → privileged operation → verify**
+
+Keeping these stages separate prevents a dashboard refresh or catalog lookup from becoming an unexpected system modification.
+
+## Safety boundary
+
+The catalog describes tools; it does not grant authorization to use them. Security tooling should only be operated against systems and environments the operator owns or is explicitly authorized to test.
