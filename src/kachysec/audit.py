@@ -102,7 +102,7 @@ def collect_audit() -> list[AuditCheck]:
 
 
 def render_audit(checks: list[AuditCheck]) -> str:
-    lines = ["NEXUS security audit (read-only)", ""]
+    lines = ["KachySec security audit (read-only)", ""]
     for check in checks:
         lines.append(f"[{check.status:<4}] {check.name}: {check.summary}")
         if check.evidence:
