@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .audit import collect_audit, render_audit
 from .baseline import collect, to_json, to_markdown
+from .operations import run_privileged
 from .lab import collect_runtimes, discover_labs, render_lab_status
 from .status import collect_status, render_status
 from .tool_manager import build_install_plan, render_plan
@@ -33,6 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     tools.add_argument("--missing", action="store_true", help="Show only missing tools")
     tools.add_argument("--category", help="Filter by category")
     tools.add_argument("--plan", action="store_true", help="Build a non-destructive package install plan")
+    tools.add_argument("--install", action="store_true", help="Install the reviewed package plan after explicit confirmation")
 
     return parser
 
@@ -72,8 +74,18 @@ def main() -> int:
         return launch_gui()
 
     if args.command == "tools":
+        plan = build_install_plan(list(catalog()))
+        if args.install:
+            print(render_plan(plan), end="")
+            if not plan.packages:
+                return 0
+            print("\nType INSTALL to confirm the exact package list:")
+            confirmation = input("> ").strip()
+            result = run_privileged("install-tools", plan.packages, confirm=confirmation == "INSTALL")
+            print(result.output)
+            return result.returncode
         if args.plan:
-            print(render_plan(build_install_plan(list(catalog()))), end="")
+            print(render_plan(plan), end="")
             return 0
         items = check_tools()
         if args.category:
