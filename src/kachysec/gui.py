@@ -7,7 +7,7 @@ from .tool_manager import build_install_plan, inspect_candidates, render_plan
 from .operations import read_operations
 from .tools import catalog, check_tools, summarize_tools
 from .updates import collect_updates
-from .telemetry import collect_telemetry, render_telemetry
+from .telemetry import collect_telemetry, render_telemetry\nfrom .telemetry_history import load_snapshots, render_history, save_snapshot
 
 
 def dashboard_snapshot() -> dict[str, object]:
@@ -243,7 +243,7 @@ def launch_gui() -> int:
         runtime_lines.extend(("", "No lab lifecycle action was executed."))
         labs_page.setPlainText("\n".join(runtime_lines))
 
-        telemetry_page.setPlainText(render_telemetry(collect_telemetry()))
+        telemetry_snapshot = collect_telemetry()\n        save_snapshot(telemetry_snapshot)\n        telemetry_page.setPlainText(render_telemetry(telemetry_snapshot) + "\\n\\n" + render_history(load_snapshots(12)))
 
         records = read_operations()
         history_lines = ["LOCAL OPERATION HISTORY", ""]
