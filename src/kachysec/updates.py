@@ -28,13 +28,10 @@ def _parse_pacman_updates(output: str) -> list[PackageUpdate]:
         if not line or line.startswith("::"):
             continue
         parts = line.split()
-        if len(parts) < 2:
+        if len(parts) < 4 or parts[2] != "->":
             continue
-        name, versions = parts[0], parts[1]
-        if "->" not in versions:
-            continue
-        current, available = versions.split("->", 1)
-        repository = parts[2] if len(parts) > 2 else ""
+        name, current, available = parts[0], parts[1], parts[3]
+        repository = parts[4].strip("[]") if len(parts) > 4 else ""
         updates.append(PackageUpdate(name, current, available, repository))
     return updates
 
