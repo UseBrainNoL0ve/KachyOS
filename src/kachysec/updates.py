@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 import shutil
 import subprocess
 
@@ -23,16 +24,16 @@ def _run(command: list[str], timeout: int = 15) -> tuple[int, str]:
 
 def _parse_pacman_updates(output: str) -> list[PackageUpdate]:
     updates: list[PackageUpdate] = []
+    pattern = re.compile(r"^(\S+)\s+(\S+)\s+->\s+(\S+)(?:\s+\[(.+)\])?$")
     for line in output.splitlines():
         line = line.strip()
         if not line or line.startswith("::"):
             continue
-        parts = line.split()
-        if len(parts) < 4 or parts[2] != "->":
+        match = pattern.match(line)
+        if not match:
             continue
-        name, current, available = parts[0], parts[1], parts[3]
-        repository = parts[4].strip("[]") if len(parts) > 4 else ""
-        updates.append(PackageUpdate(name, current, available, repository))
+        name, current, available, repository = match.groups()
+        updates.append(PackageUpdate(name, current, available, repository or ""))
     return updates
 
 
