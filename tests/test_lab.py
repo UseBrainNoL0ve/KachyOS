@@ -1,29 +1,28 @@
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
-from kachysec.lab import collect_runtimes, discover_labs, render_lab_status
+from kachysec.lab import (
+    LabDefinition,
+    build_lab_plans,
+    discover_labs,
+    render_lab_plans,
+)
 
 
 class LabTests(unittest.TestCase):
-    @patch("kachysec.lab.shutil.which", return_value=None)
-    def test_runtime_collection_is_safe(self, _which):
-        runtimes = collect_runtimes()
-        self.assertTrue(runtimes)
-        self.assertFalse(any(item.installed for item in runtimes))
-
-    def test_discovery_only_returns_existing_definitions(self):
+    def test_discovery_only_returns_existing_definitions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "labs" / "containers").mkdir(parents=True)
             labs = discover_labs(root)
-            self.assertEqual([item.name for item in labs], ["containers"])
+        self.assertEqual([lab.name for lab in labs], ["containers"])
 
-    def test_render_is_read_only(self):
-        text = render_lab_status([], [])
-        self.assertIn("read-only", text)
-        self.assertIn("not modified", text)
+    def test_lab_plan_is_review_only(self) -> None:
+        labs = [LabDefinition("demo", "labs/demo", "podman", "authorized training", "isolated")]
+        plans = build_lab_plans(labs)
+        self.assertEqual(plans[0].action, "review-only")
+        self.assertIn("No containers or virtual machines were created", render_lab_plans(plans))
 
 
 if __name__ == "__main__":
