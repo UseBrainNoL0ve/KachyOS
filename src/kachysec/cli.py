@@ -9,7 +9,7 @@ from .evidence import diff_baselines, latest_baselines, load_baseline, render_di
 from .lab import build_lab_plans, collect_runtimes, discover_labs, render_lab_plans, render_lab_status
 from .operations import run_privileged
 from .status import collect_status, render_status
-from .telemetry import collect_telemetry, render_telemetry
+from .telemetry import collect_telemetry, render_telemetry\nfrom .telemetry_history import load_snapshots, render_history, save_snapshot
 from .tool_manager import build_install_plan, render_plan
 from .tools import catalog, check_tools
 from .updates import collect_updates, render_updates
@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("status", help="Show workstation health and tool summary")
     subparsers.add_parser("audit", help="Run a read-only security posture audit")
     subparsers.add_parser("updates", help="Show pending package updates without modifying the host")
-    subparsers.add_parser("telemetry", help="Show local defensive host telemetry (read-only)")
+    telemetry = subparsers.add_parser("telemetry", help="Show local defensive host telemetry (read-only)")\n    telemetry.add_argument("--history", action="store_true", help="Show recent locally saved telemetry snapshots")\n    telemetry.add_argument("--limit", type=int, default=60, help="Maximum telemetry history entries to display")
 
     baseline_diff = subparsers.add_parser("baseline-diff", help="Compare two saved baseline JSON snapshots")
     baseline_diff.add_argument("before", type=Path, nargs="?")
