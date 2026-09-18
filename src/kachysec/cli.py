@@ -6,7 +6,7 @@ from pathlib import Path
 from .audit import collect_audit, render_audit
 from .baseline import collect, to_json, to_markdown
 from .operations import run_privileged
-from .lab import collect_runtimes, discover_labs, render_lab_status
+from .lab import build_lab_plans, collect_runtimes, discover_labs, render_lab_plans, render_lab_status
 from .status import collect_status, render_status
 from .tool_manager import build_install_plan, render_plan
 from .tools import catalog, check_tools
@@ -27,7 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("status", help="Show workstation health and tool summary")
     subparsers.add_parser("audit", help="Run a read-only security posture audit")
     subparsers.add_parser("updates", help="Show pending package updates without modifying the host")
-    subparsers.add_parser("lab", help="Inspect local lab runtimes and definitions")
+    lab = subparsers.add_parser("lab", help="Inspect local lab runtimes and definitions")
+    lab.add_argument("--plan", action="store_true", help="Build a review-only lab lifecycle plan")
     subparsers.add_parser("gui", help="Launch the optional PySide6 security dashboard")
 
     tools = subparsers.add_parser("tools", help="Browse the security tool catalog")
@@ -66,7 +67,11 @@ def main() -> int:
         return 0
 
     if args.command == "lab":
-        print(render_lab_status(collect_runtimes(), discover_labs()), end="")
+        labs = discover_labs()
+        if args.plan:
+            print(render_lab_plans(build_lab_plans(labs)), end="")
+        else:
+            print(render_lab_status(collect_runtimes(), labs), end="")
         return 0
 
     if args.command == "gui":
