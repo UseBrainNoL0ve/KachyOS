@@ -1,14 +1,35 @@
 # Package Manager Abstraction
 
-The package-manager service is the boundary between KachySec and the native CachyOS/Arch package manager.
+The package-manager layer is the boundary between KachySec and the native CachyOS/Arch package manager.
 
-Current capabilities:
+## Current capabilities
 
-- detect whether pacman is available;
-- inspect whether a candidate package is installed;
-- read the installed version;
-- build a unique package installation plan without executing it.
+- Detect whether `pacman` is available.
+- Inspect installed package names.
+- Resolve locally available candidate package names.
+- Build a unique package installation plan without executing it.
+- Hand the reviewed plan to the explicit operations layer.
 
-No package installation or removal is performed by this layer.
+## Change boundary
 
-The design keeps privileged host changes outside discovery code. A later explicit package-management feature can add confirmation, privilege handling, logging, and rollback-aware UX without coupling those concerns to the tool catalog.
+Package installation is not part of discovery.
+
+The explicit CLI operation `kachysec tools --install`:
+
+1. builds the current package plan;
+2. prints the exact packages;
+3. requires the literal `INSTALL` confirmation;
+4. invokes `sudo pacman -S --needed ...`;
+5. records the result locally.
+
+This keeps privileged host changes outside catalog and discovery code.
+
+## Future work
+
+A stronger package abstraction can add:
+
+- post-install verification;
+- transaction-aware evidence;
+- failure classification;
+- rollback-aware UX where the package manager supports it;
+- better candidate metadata and repository provenance.
