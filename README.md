@@ -1,32 +1,5 @@
-# KachyOS Security Workstation
-
-A modular cybersecurity workstation layer built on top of CachyOS.
-
-> The goal is not to replace CachyOS or imitate its desktop environment. KachyOS keeps the existing system identity and adds a structured, reproducible security engineering toolkit around it.
-
-## Goals
-
-- Preserve the existing CachyOS desktop, theme and workflow.
-- Organize security tooling by discipline instead of installing an unstructured tool dump.
-- Provide reproducible setup and health checks.
-- Support isolated local labs, containers and virtual machines.
-- Build useful GUI and CLI automation for defensive security engineering and authorized testing.
-- Keep configuration auditable and GitHub-friendly.
-
-## Planned modules
-
-- `core/` — system checks, package state and prerequisites
-- `tools/` — security tool definitions and installation metadata
-- `cli/` — command-line management interface
-- `gui/` — local security dashboard
-- `labs/` — isolated training/lab environments
-- `docs/` — architecture, setup and learning notes
-- `tests/` — automated tests
-
-## Security scope
-
-Automation is designed for systems and environments the user owns or is explicitly authorized to test. The project intentionally avoids destructive or unauthorized attack automation.
-
-## Roadmap
-
-See [`docs/ROADMAP.md`](docs/ROADMAP.md).
+# KachyOS Security Workstation\n\nA modular cybersecurity workstation layer built on top of CachyOS.\n\n> KachySec does not replace the CachyOS desktop, theme, compositor or normal workflow. It adds a structured security-engineering control plane around the existing host.\n\n## What this project is\n\nKachySec combines host visibility, security posture checks, a broad security-tool catalog, package planning, explicit package operations, a live GUI, operation history and isolated lab-runtime discovery.\n\n- **Host visibility** — baseline inventory, runtime discovery and package state.\n- **Security posture** — lightweight, read-only audits.\n- **Tool universe** — networking, web security, vulnerability management, OSINT, forensics, reverse engineering, password auditing, wireless and observability.\n- **Tool Manager** — package-candidate inspection and exact installation planning.
+- **Operations** — explicit, reviewable privileged package execution with a local audit trail.\n- **GUI dashboard** — live desktop view over the same Python service layer.\n- **Lab Manager** — discovery of container/VM runtimes and local lab definitions.\n- **Reproducible packaging** — native Arch/CachyOS PKGBUILD.\n- **CI and tests** — automated Python test suite.\n\n## Quick start\n\n### Clone\n```bash\ngit clone https://github.com/UseBrainNoL0ve/KachyOS.git\ncd KachyOS\n```\n\n### Install\nDevelopment checkout:\n```bash\npython -m pip install --user .\n```\nNative CachyOS/Arch package:\n```bash\nmakepkg -si\n```\nIf packaging prerequisites are missing:\n```bash\nsudo pacman -S python python-pip python-build python-installer python-setuptools\n```\nGUI dependency:\n```bash\nsudo pacman -S pyside6\n```\n\n### Verify\n```bash\nkachysec --help\nkachysec status\nkachysec audit\n```\n\n### Launch\n```bash\nkachysec gui\n```\nThe dashboard refreshes automatically every 10 seconds and also has a manual Refresh action.\n\n## Command reference\n\n| Command | What it does | Host changes |\n| --- | --- | --- |\n| `kachysec baseline` | Collects host inventory | No |\n| `kachysec baseline --format json --output report.json` | Machine-readable inventory | No |\n| `kachysec status` | Tool/runtime summary | No |\n| `kachysec audit` | Lightweight security posture audit | No |\n| `kachysec updates` | Shows pending pacman updates | No |\n| `kachysec tools` | Lists the security catalog | No |\n| `kachysec tools --missing` | Lists missing catalog entries | No |\n| `kachysec tools --category web` | Filters one discipline | No |\n| `kachysec tools --plan` | Builds a pacman package plan | No |\n| `kachysec lab` | Discovers local lab runtimes | No |
+| `kachysec lab --plan` | Builds a review-only isolated lab plan | No |\n| `kachysec gui` | Opens the desktop dashboard | No |
+| `kachysec tools --install` | Explicitly installs a reviewed package plan | **Yes** |\n\n## First-run workflow\n\n```bash\nmkdir -p reports\nkachysec baseline --format markdown --output reports/baseline.md\nkachysec status\nkachysec tools --missing\nkachysec tools --plan\nkachysec audit\nkachysec lab\nkachysec gui\n```\n\n## GUI guide\n\n### Overview\nLive workstation coverage, update count, audit state and lab-runtime availability.\n\n### Tools\nSearch by name/category/purpose/binary, filter by category, then select a tool to inspect its purpose, binary, scope, installed state, package candidates and verification command.\n\n**Build Install Plan** previews a future pacman operation. It does not install anything.\n\n### Audit\nDisplays read-only posture checks with evidence and review guidance.\n\n### Updates\nShows package version transitions reported by pacman -Qu. KachySec does not install updates in this layer.\n\n### Labs\nShows container/VM tooling and discovered local lab definitions. No container or VM is started by the current implementation.\n\n## Architecture\n\n```text\nCachyOS host\n    │\n    └── KachySec\n        ├── baseline\n        ├── status\n        ├── audit\n        ├── updates\n        ├── tool catalog\n        ├── tool manager\n        ├── lab manager\n        └── PySide6 GUI\n                 │\n                 └── future isolated labs\n                     ├── containers\n                     └── virtual machines\n```\n\nCore services are separate from presentation, so CLI and GUI consume the same logic.\n\n## Security model\n\nKachySec is designed for systems and environments the user owns or is explicitly authorized to test.\n\nCurrent automation is deliberately conservative:\n- discovery before modification;\n- package planning before installation;\n- no automatic bulk installation;\n- no automatic service or firewall changes;\n- no active network probing from the dashboard;\n- lab automation is isolated from the host by design;\n- reports may contain local-system information and should be reviewed before publication.\n\n## Documentation\n\n- [Installation](docs/INSTALL.md)\n- [Usage Guide](docs/USAGE.md)\n- [Architecture](docs/ARCHITECTURE.md)\n- [Roadmap](docs/ROADMAP.md)\n- [Security Core](docs/SECURITY_CORE.md)\n- [Audit](docs/AUDIT.md)\n- [Package Updates](docs/UPDATES.md)\n- [Tool Manager](docs/TOOL_MANAGER.md)
+- [Operations](docs/OPERATIONS.md)\n- [Lab Manager](docs/LABS.md)\n- [GUI](docs/GUI.md)\n\n## Development\n\nRun:\n```bash\npython -m unittest discover -s tests -v\n```\nGitHub Actions runs the same test suite on pushes and pull requests.\n\n## Project status\n\nCurrent implementation: **Phase 0 + Phase 1 foundations, live GUI control plane, tool planning, and lab discovery**.\n\nThe next major layer is explicit, reviewable change execution with privileged package operations and controlled lab lifecycle operations, followed by verification and audit trails.\n\n## License\n\nMIT. See the repository license metadata.
