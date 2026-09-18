@@ -43,8 +43,14 @@
 - Bounded local event history
 - Non-blocking live GUI monitoring
 - Alert-oriented observations without automatic remediation
+- Authorized offensive workflow profiles and scope-aware execution plans
 
 ### Phase 4 — Controlled lab lifecycle
+- Authorized offensive workflow profiles
+- Target-scope declaration and preflight checks
+- Reviewable reconnaissance/enumeration plans
+- Controlled vulnerability-validation workflows
+- Exploit-development/research lab templates
 - Explicit lab execution plans
 - Local/isolated container lifecycle
 - VM lifecycle with explicit boundaries
