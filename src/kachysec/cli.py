@@ -7,6 +7,7 @@ from .audit import collect_audit, render_audit
 from .baseline import collect, to_json, to_markdown
 from .status import collect_status, render_status
 from .tools import check_tools
+from .updates import collect_updates, render_updates
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,6 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers.add_parser("status", help="Show workstation health and tool summary")
     subparsers.add_parser("audit", help="Run a read-only security posture audit")
+    subparsers.add_parser("updates", help="Show pending package updates without modifying the host")
 
     tools = subparsers.add_parser("tools", help="List security tool presence")
     tools.add_argument("--missing", action="store_true", help="Show only missing tools")
@@ -50,6 +52,10 @@ def main() -> int:
 
     if args.command == "audit":
         print(render_audit(collect_audit()), end="")
+        return 0
+
+    if args.command == "updates":
+        print(render_updates(collect_updates()), end="")
         return 0
 
     if args.command == "tools":
