@@ -28,6 +28,8 @@
 ## Next milestones
 
 ### Phase 2 — Evidence and change verification
+
+**Started:** baseline snapshot storage and structural diffing are implemented.
 - Persistent telemetry history
 - Baseline snapshot storage
 - Baseline diff engine
