@@ -12,6 +12,10 @@ class CliTests(unittest.TestCase):
         args = build_parser().parse_args(["lab"])
         self.assertEqual(args.command, "lab")
 
+    def test_lab_plan_flag(self) -> None:
+        args = build_parser().parse_args(["lab", "--plan"])
+        self.assertTrue(args.plan)
+
     def test_baseline_output_options(self) -> None:
         args = build_parser().parse_args(["baseline", "--format", "json", "--output", "report.json"])
         self.assertEqual(args.format, "json")
