@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Large milestone
+- Added review-only lab orchestration plans with explicit isolation metadata.
+- Batched pacman package resolution to reduce catalog planning overhead.
+- Added explicit package installation with confirmation and local operation history.
+- Added GUI operation history visibility.
+
 ### Added
 - Expanded security-tool catalog and package metadata.
 - Read-only Tool Manager with pacman candidate inspection and install-plan generation.
