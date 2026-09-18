@@ -24,6 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("status", help="Show workstation health and tool summary")
     subparsers.add_parser("audit", help="Run a read-only security posture audit")
     subparsers.add_parser("updates", help="Show pending package updates without modifying the host")
+    subparsers.add_parser("gui", help="Launch the optional PySide6 security dashboard")
 
     tools = subparsers.add_parser("tools", help="List security tool presence")
     tools.add_argument("--missing", action="store_true", help="Show only missing tools")
@@ -57,6 +58,10 @@ def main() -> int:
     if args.command == "updates":
         print(render_updates(collect_updates()), end="")
         return 0
+
+    if args.command == "gui":
+        from .gui import launch_gui
+        return launch_gui()
 
     if args.command == "tools":
         items = check_tools()
