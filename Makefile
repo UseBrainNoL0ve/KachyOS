@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: test install gui baseline status audit updates lab
+.PHONY: test install gui baseline status audit updates lab telemetry baseline-diff
 
 test:
 	$(PYTHON) -m unittest discover -s tests -v
@@ -25,6 +25,9 @@ updates:
 
 lab:
 	kachysec lab
+
+baseline-diff:
+	kachysec baseline-diff --latest
 
 telemetry:
 	kachysec telemetry

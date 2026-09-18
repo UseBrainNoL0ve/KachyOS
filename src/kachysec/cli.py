@@ -5,11 +5,12 @@ from pathlib import Path
 
 from .audit import collect_audit, render_audit
 from .baseline import collect, to_json, to_markdown
-from .operations import run_privileged
+from .evidence import diff_baselines, latest_baselines, load_baseline, render_diff, save_baseline
 from .lab import build_lab_plans, collect_runtimes, discover_labs, render_lab_plans, render_lab_status
+from .operations import run_privileged
 from .status import collect_status, render_status
-from .tool_manager import build_install_plan, render_plan
 from .telemetry import collect_telemetry, render_telemetry
+from .tool_manager import build_install_plan, render_plan
 from .tools import catalog, check_tools
 from .updates import collect_updates, render_updates
 
@@ -29,6 +30,12 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("audit", help="Run a read-only security posture audit")
     subparsers.add_parser("updates", help="Show pending package updates without modifying the host")
     subparsers.add_parser("telemetry", help="Show local defensive host telemetry (read-only)")
+
+    baseline_diff = subparsers.add_parser("baseline-diff", help="Compare two saved baseline JSON snapshots")
+    baseline_diff.add_argument("before", type=Path, nargs="?")
+    baseline_diff.add_argument("after", type=Path, nargs="?")
+    baseline_diff.add_argument("--latest", action="store_true", help="Compare the two newest saved snapshots")
+
     lab = subparsers.add_parser("lab", help="Inspect local lab runtimes and definitions")
     lab.add_argument("--plan", action="store_true", help="Build a review-only lab lifecycle plan")
     subparsers.add_parser("gui", help="Launch the optional PySide6 security dashboard")
@@ -47,13 +54,35 @@ def main() -> int:
 
     if args.command == "baseline":
         data = collect()
-        rendered = to_json(data) if args.format == "json" else to_markdown(data)
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
+            rendered = to_json(data) if args.format == "json" else to_markdown(data)
             args.output.write_text(rendered, encoding="utf-8")
             print(f"Baseline report written to {args.output}")
+            saved = save_baseline(data)
+            print(f"Snapshot saved to {saved}")
         else:
-            print(rendered, end="")
+            print(to_json(data) if args.format == "json" else to_markdown(data), end="")
+        return 0
+
+    if args.command == "baseline-diff":
+        if args.latest:
+            snapshots = latest_baselines(2)
+            if len(snapshots) < 2:
+                print("Need at least two saved baselines.")
+                return 2
+            before, after = snapshots[1], snapshots[0]
+        elif args.before and args.after:
+            before, after = args.before, args.after
+        else:
+            print("Provide BEFORE AFTER or use --latest.")
+            return 2
+        try:
+            diff = diff_baselines(load_baseline(before), load_baseline(after))
+        except (OSError, ValueError) as exc:
+            print(f"Could not read baseline snapshots: {exc}")
+            return 2
+        print(render_diff(diff, before=before, after=after))
         return 0
 
     if args.command == "status":
