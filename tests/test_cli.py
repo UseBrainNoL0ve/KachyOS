@@ -20,6 +20,15 @@ class CliTests(unittest.TestCase):
         args = build_parser().parse_args(["baseline-diff", "--latest"])
         self.assertTrue(args.latest)
 
+    def test_assistant_command(self) -> None:
+        args = build_parser().parse_args(["assistant", "explain this audit warning"])
+        self.assertEqual(args.command, "assistant")
+        self.assertEqual(args.question, "explain this audit warning")
+
+    def test_assistant_provider_flag(self) -> None:
+        args = build_parser().parse_args(["assistant", "--providers"])
+        self.assertTrue(args.providers)
+
     def test_baseline_output_options(self) -> None:
         args = build_parser().parse_args(["baseline", "--format", "json", "--output", "report.json"])
         self.assertEqual(args.format, "json")
