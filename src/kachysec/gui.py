@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from .audit import collect_audit
+from .lab import collect_runtimes, discover_labs
 from .status import collect_status
-from .tools import check_tools, summarize_tools
+from .tool_manager import build_install_plan, inspect_candidates, render_plan
+from .tools import catalog, check_tools, summarize_tools
 from .updates import collect_updates
 
 
@@ -15,6 +17,8 @@ def dashboard_snapshot() -> dict[str, object]:
         "tools": tools,
         "tool_summary": summarize_tools(tools),
         "updates": collect_updates(),
+        "runtimes": collect_runtimes(),
+        "labs": discover_labs(),
     }
 
 
@@ -22,18 +26,9 @@ def launch_gui() -> int:
     try:
         from PySide6.QtCore import QTimer, Qt
         from PySide6.QtWidgets import (
-            QApplication,
-            QFrame,
-            QHBoxLayout,
-            QLabel,
-            QLineEdit,
-            QListWidget,
-            QListWidgetItem,
-            QMainWindow,
-            QPushButton,
-            QTabWidget,
-            QVBoxLayout,
-            QWidget,
+            QApplication, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit,
+            QListWidget, QListWidgetItem, QMainWindow, QPushButton, QSplitter,
+            QTabWidget, QTextEdit, QVBoxLayout, QWidget,
         )
     except ImportError:
         print("GUI dependency missing: install PySide6, then run 'kachysec gui'.")
@@ -45,12 +40,12 @@ def launch_gui() -> int:
 
     window = QMainWindow()
     window.setWindowTitle("KachySec — Security Workstation")
-    window.resize(1180, 760)
+    window.resize(1280, 820)
 
     root = QWidget()
     root_layout = QVBoxLayout(root)
-    root_layout.setContentsMargins(24, 20, 24, 20)
-    root_layout.setSpacing(14)
+    root_layout.setContentsMargins(22, 18, 22, 18)
+    root_layout.setSpacing(12)
 
     header = QHBoxLayout()
     title = QLabel("KachySec")
@@ -66,12 +61,7 @@ def launch_gui() -> int:
 
     cards = QHBoxLayout()
     card_values: dict[str, QLabel] = {}
-    for key, label in (
-        ("tools", "Tools"),
-        ("updates", "Updates"),
-        ("audit", "Audit"),
-        ("runtime", "Runtime"),
-    ):
+    for key, label in (("tools", "Tools"), ("updates", "Updates"), ("audit", "Audit"), ("runtime", "Runtimes")):
         card = QFrame()
         card.setObjectName("Card")
         layout = QVBoxLayout(card)
@@ -86,94 +76,167 @@ def launch_gui() -> int:
     root_layout.addLayout(cards)
 
     tabs = QTabWidget()
-    overview = QLabel(
-        "Read-only dashboard. Refreshing this view never installs packages, "
-        "changes services, or performs network probing."
-    )
-    overview.setWordWrap(True)
-    overview.setAlignment(Qt.AlignmentFlag.AlignTop)
+    overview = QTextEdit()
+    overview.setReadOnly(True)
     overview.setObjectName("Panel")
     tabs.addTab(overview, "Overview")
 
     tools_page = QWidget()
     tools_layout = QVBoxLayout(tools_page)
+    toolbar = QHBoxLayout()
     search = QLineEdit()
-    search.setPlaceholderText("Filter tools by name, category, or purpose…")
+    search.setPlaceholderText("Search tools by name, category, purpose, or binary…")
+    category = QComboBox()
+    category.addItem("All categories")
+    toolbar.addWidget(search, 1)
+    toolbar.addWidget(category)
+    tools_layout.addLayout(toolbar)
+
+    splitter = QSplitter(Qt.Orientation.Horizontal)
     tool_list = QListWidget()
-    tools_layout.addWidget(search)
-    tools_layout.addWidget(tool_list)
+    detail = QTextEdit()
+    detail.setReadOnly(True)
+    detail.setObjectName("Panel")
+    splitter.addWidget(tool_list)
+    splitter.addWidget(detail)
+    splitter.setSizes([620, 560])
+    tools_layout.addWidget(splitter, 1)
+
+    plan_button = QPushButton("Build Install Plan")
+    plan_button.setToolTip("Preview a pacman installation plan. No package changes are made.")
+    tools_layout.addWidget(plan_button)
     tabs.addTab(tools_page, "Tools")
 
-    audit_page = QLabel()
-    audit_page.setWordWrap(True)
-    audit_page.setAlignment(Qt.AlignmentFlag.AlignTop)
+    audit_page = QTextEdit()
+    audit_page.setReadOnly(True)
     audit_page.setObjectName("Panel")
     tabs.addTab(audit_page, "Audit")
 
-    updates_page = QLabel()
-    updates_page.setWordWrap(True)
-    updates_page.setAlignment(Qt.AlignmentFlag.AlignTop)
+    updates_page = QTextEdit()
+    updates_page.setReadOnly(True)
     updates_page.setObjectName("Panel")
     tabs.addTab(updates_page, "Updates")
 
-    root_layout.addWidget(tabs)
+    labs_page = QTextEdit()
+    labs_page.setReadOnly(True)
+    labs_page.setObjectName("Panel")
+    tabs.addTab(labs_page, "Labs")
+
+    root_layout.addWidget(tabs, 1)
     window.setCentralWidget(root)
 
     snapshot: dict[str, object] = {}
+    visible_tools: list[dict[str, object]] = []
+
+    def render_tool_detail() -> None:
+        row = tool_list.currentRow()
+        if row < 0 or row >= len(visible_tools):
+            detail.setPlainText("Select a tool to inspect its metadata and package candidates.")
+            return
+        item = visible_tools[row]
+        spec = next(spec for spec in catalog() if spec.name == item["name"])
+        package_lines = []
+        for candidate in inspect_candidates(spec):
+            state = "installed" if candidate.installed else ("available" if candidate.available else "not found")
+            package_lines.append(f"• {candidate.package} — {state}")
+        verification = " ".join(str(x) for x in spec.verification)
+        detail.setPlainText(
+            f"{item['name']}\n{'=' * len(str(item['name']))}\n\n"
+            f"Category: {item['category']}\nBinary: {item['binary']}\n"
+            f"Scope: {item['scope']}\nInstalled: {'yes' if item['installed'] else 'no'}\n\n"
+            f"Purpose\n{item['purpose']}\n\nPackage candidates\n"
+            + ("\n".join(package_lines) if package_lines else "No package metadata.")
+            + f"\n\nVerification\n{verification}\n\n"
+            "No installation is performed from this view."
+        )
+
+    def filter_tools() -> None:
+        query = search.text().strip().lower()
+        selected_category = category.currentText()
+        tool_list.clear()
+        visible_tools.clear()
+        for item in snapshot.get("tools", []):
+            if selected_category != "All categories" and item["category"] != selected_category:
+                continue
+            haystack = " ".join(str(item[field]) for field in ("name", "category", "purpose", "binary")).lower()
+            if query and query not in haystack:
+                continue
+            visible_tools.append(item)
+            marker = "●" if item["installed"] else "○"
+            tool_list.addItem(QListWidgetItem(f"{marker}  {item['name']}  ·  {item['category']}"))
+        render_tool_detail()
 
     def render() -> None:
         nonlocal snapshot
         snapshot = dashboard_snapshot()
-
         summary = snapshot["tool_summary"]
-        card_values["tools"].setText(
-            f"{summary['installed']} / {summary['total']}"
-        )
-        updates = snapshot["updates"]
-        card_values["updates"].setText(str(len(updates)))
+        card_values["tools"].setText(f"{summary['installed']} / {summary['total']}")
+        card_values["updates"].setText(str(len(snapshot["updates"])))
         audit = snapshot["audit"]
         passed = sum(1 for item in audit if item.status == "PASS")
         warnings = sum(1 for item in audit if item.status == "WARN")
         card_values["audit"].setText(f"{passed} / {warnings}")
-        status = snapshot["status"]
-        runtime_count = sum(1 for value in status.get("runtimes", {}).values() if value)
-        card_values["runtime"].setText(str(runtime_count))
+        card_values["runtime"].setText(str(sum(1 for item in snapshot["runtimes"] if item.installed)))
 
-        tool_list.clear()
-        query = search.text().strip().lower()
-        for item in snapshot["tools"]:
-            haystack = " ".join(
-                str(item[field]) for field in ("name", "category", "purpose")
-            ).lower()
-            if query and query not in haystack:
-                continue
-            marker = "●" if item["installed"] else "○"
-            QListWidgetItem(
-                f"{marker}  {item['name']}   ·   {item['category']}   —   {item['purpose']}",
-                tool_list,
-            )
+        overview.setPlainText(
+            "KACHYSEC / WORKSTATION OVERVIEW\n\n"
+            "A modular security layer over the existing CachyOS desktop.\n\n"
+            "LIVE STATE\n"
+            f"• Tool coverage: {summary['installed']} installed / {summary['total']} catalogued\n"
+            f"• Pending updates: {len(snapshot['updates'])}\n"
+            f"• Audit: {passed} PASS / {warnings} WARN\n"
+            f"• Lab runtimes: {sum(1 for item in snapshot['runtimes'] if item.installed)} available\n\n"
+            "SAFE-BY-DESIGN\n"
+            "This dashboard is currently read-only. Refreshing, inspecting tools, and building plans do not install packages, alter services, start labs, or probe networks.\n\n"
+            "WORKFLOW\nDiscover → inspect → plan → explicit confirmation → change → verify"
+        )
+
+        current = category.currentText()
+        category.blockSignals(True)
+        category.clear()
+        category.addItem("All categories")
+        for name in sorted({str(item["category"]) for item in snapshot["tools"]}):
+            category.addItem(name)
+        if current in [category.itemText(i) for i in range(category.count())]:
+            category.setCurrentText(current)
+        category.blockSignals(False)
+        filter_tools()
 
         audit_lines = ["READ-ONLY SECURITY AUDIT", ""]
         for item in audit:
-            audit_lines.append(f"{item.status:<5} {item.name} — {item.summary}")
+            audit_lines.append(f"[{item.status}] {item.name} — {item.summary}")
             if item.evidence:
-                audit_lines.append(f"      {item.evidence}")
-        audit_page.setText("\n".join(audit_lines))
+                audit_lines.append(f"  Evidence: {item.evidence.splitlines()[0]}")
+            if item.remediation:
+                audit_lines.append(f"  Review: {item.remediation}")
+        audit_page.setPlainText("\n".join(audit_lines))
 
+        updates = snapshot["updates"]
         update_lines = ["PACKAGE UPDATES", ""]
-        if updates:
-            update_lines.extend(
-                f"{item.name}: {item.current} → {item.available}"
-                for item in updates
-            )
-        else:
+        update_lines.extend(f"{item.name}: {item.current} → {item.available}" for item in updates)
+        if not updates:
             update_lines.append("No pending package updates reported by pacman.")
-        update_lines.append("")
-        update_lines.append("Read-only: no packages were modified.")
-        updates_page.setText("\n".join(update_lines))
+        update_lines.extend(("", "Read-only: no packages were modified."))
+        updates_page.setPlainText("\n".join(update_lines))
+
+        runtime_lines = ["LAB RUNTIMES", ""]
+        for item in snapshot["runtimes"]:
+            marker = "[+]" if item.installed else "[-]"
+            runtime_lines.append(f"{marker} {item.name} — {item.version or 'not installed'}")
+        runtime_lines.extend(("", "LOCAL LAB DEFINITIONS", ""))
+        labs = snapshot["labs"]
+        runtime_lines.extend(f"• {lab.name} [{lab.kind}] — {lab.description}" for lab in labs)
+        if not labs:
+            runtime_lines.append("• No local lab definitions discovered.")
+        runtime_lines.extend(("", "No lab lifecycle action was executed."))
+        labs_page.setPlainText("\n".join(runtime_lines))
 
     refresh_button.clicked.connect(render)
-    search.textChanged.connect(lambda _text: render())
+    search.textChanged.connect(lambda _text: filter_tools())
+    category.currentTextChanged.connect(lambda _text: filter_tools())
+    tool_list.currentRowChanged.connect(lambda _row: render_tool_detail())
+    plan_button.clicked.connect(lambda: detail.setPlainText(render_plan(build_install_plan(list(catalog())))))
+
     timer = QTimer(window)
     timer.setInterval(10_000)
     timer.timeout.connect(render)
@@ -181,16 +244,16 @@ def launch_gui() -> int:
 
     window.setStyleSheet(
         """
-        QMainWindow { background: palette(window); }
         QLabel#Title { font-size: 30px; font-weight: 700; }
         QLabel#Subtitle { padding-left: 12px; color: palette(mid); }
         QFrame#Card { border: 1px solid palette(mid); border-radius: 12px; }
-        QLabel#CardValue { font-size: 26px; font-weight: 700; }
+        QLabel#CardValue { font-size: 25px; font-weight: 700; }
         QLabel#CardCaption { color: palette(mid); }
-        QLabel#Panel { padding: 18px; }
-        QLineEdit { padding: 10px; border-radius: 8px; }
-        QListWidget { padding: 8px; border-radius: 8px; }
+        QTextEdit#Panel { padding: 12px; border-radius: 8px; }
+        QLineEdit, QComboBox { padding: 9px; border-radius: 8px; }
+        QListWidget { padding: 6px; border-radius: 8px; }
         QPushButton { padding: 9px 16px; border-radius: 8px; }
+        QTabWidget::pane { border: 0; }
         """
     )
 
