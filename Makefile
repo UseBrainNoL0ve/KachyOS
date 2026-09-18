@@ -26,5 +26,8 @@ updates:
 lab:
 	kachysec lab
 
+baseline-diff:
+	kachysec baseline-diff --latest
+
 telemetry:
 	kachysec telemetry
