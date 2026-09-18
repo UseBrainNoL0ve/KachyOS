@@ -36,3 +36,12 @@ Automation is designed for systems and environments the user owns or is explicit
 ## Roadmap
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+
+## GUI
+
+The optional PySide6 dashboard provides a native desktop view over the same read-only core services used by the CLI.
+
+Command: `kachysec gui`
+
+The dashboard includes live refresh, tool search, security-audit visibility, package-update visibility, and runtime status. Refreshing the GUI does not install packages, change services, or perform active network probing.
