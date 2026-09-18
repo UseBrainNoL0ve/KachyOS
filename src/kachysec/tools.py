@@ -101,7 +101,6 @@ TOOL_CATALOG: tuple[ToolSpec, ...] = (
     ToolSpec("objdump", "objdump", "reverse", "ELF/object-file disassembly and inspection.", ("objdump", "--version"), ("binutils",), "local"),
     ToolSpec("readelf", "readelf", "reverse", "ELF headers, sections and symbols inspection.", ("readelf", "--version"), ("binutils",), "local"),
     ToolSpec("patchelf", "patchelf", "reverse", "ELF metadata inspection and controlled modification.", ("patchelf", "--version"), ("patchelf",), "local"),
-    ToolSpec("strace-analyzer", "strace-log-merge", "debugging", "Optional tooling for organizing syscall traces.", ("strace-log-merge", "--help"), (), "local"),
 
     # Password auditing / cryptography for owned labs
     ToolSpec("Hashcat", "hashcat", "password-audit", "Password auditing in authorized labs and recovery workflows.", ("hashcat", "--version"), ("hashcat",), "authorized"),
@@ -132,7 +131,6 @@ TOOL_CATALOG: tuple[ToolSpec, ...] = (
     ToolSpec("Git", "git", "development", "Version control for reproducible security engineering.", ("git", "--version"), ("git",), "local"),
     ToolSpec("GitHub CLI", "gh", "development", "GitHub repository, issue and workflow automation.", ("gh", "--version"), ("github-cli",), "local"),
     ToolSpec("Python", "python", "development", "Automation and security-engineering runtime.", ("python", "--version"), ("python",), "local"),
-    ToolSpec("strace", "strace", "observability", "System-call tracing for local debugging and diagnostics.", ("strace", "-V"), ("strace",), "local"),
     ToolSpec("lsof", "lsof", "observability", "Process, file and socket relationship inspection.", ("lsof", "-v"), ("lsof",), "local"),
     ToolSpec("procps-ng", "ps", "observability", "Process and resource inspection.", ("ps", "--version"), ("procps-ng",), "local"),
     ToolSpec("htop", "htop", "observability", "Interactive process and resource monitoring.", ("htop", "--version"), ("htop",), "local"),
