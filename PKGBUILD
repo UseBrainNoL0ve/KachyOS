@@ -8,6 +8,7 @@ arch=('any')
 url='https://github.com/UseBrainNoL0ve/KachyOS'
 license=('MIT')
 depends=('python')
+optdepends=('pyside6: optional Qt6 graphical security dashboard')
 makedepends=('git' 'python-build' 'python-installer' 'python-setuptools')
 source=("git+https://github.com/UseBrainNoL0ve/KachyOS.git#branch=main")
 sha256sums=('SKIP')
