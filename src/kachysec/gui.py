@@ -7,6 +7,7 @@ from .tool_manager import build_install_plan, inspect_candidates, render_plan
 from .operations import read_operations
 from .tools import catalog, check_tools, summarize_tools
 from .updates import collect_updates
+from .telemetry import collect_telemetry, render_telemetry
 
 
 def dashboard_snapshot() -> dict[str, object]:
@@ -123,6 +124,11 @@ def launch_gui() -> int:
     labs_page.setObjectName("Panel")
     tabs.addTab(labs_page, "Labs")
 
+    telemetry_page = QTextEdit()
+    telemetry_page.setReadOnly(True)
+    telemetry_page.setObjectName("Panel")
+    tabs.addTab(telemetry_page, "Telemetry")
+
     history_page = QTextEdit()
     history_page.setReadOnly(True)
     history_page.setObjectName("Panel")
@@ -236,6 +242,8 @@ def launch_gui() -> int:
             runtime_lines.append("• No local lab definitions discovered.")
         runtime_lines.extend(("", "No lab lifecycle action was executed."))
         labs_page.setPlainText("\n".join(runtime_lines))
+
+        telemetry_page.setPlainText(render_telemetry(collect_telemetry()))
 
         records = read_operations()
         history_lines = ["LOCAL OPERATION HISTORY", ""]
