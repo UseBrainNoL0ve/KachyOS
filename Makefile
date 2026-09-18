@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: test install gui baseline status audit updates lab
+.PHONY: test install gui baseline status audit updates lab telemetry baseline-diff
 
 test:
 	$(PYTHON) -m unittest discover -s tests -v
