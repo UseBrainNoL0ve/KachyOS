@@ -12,7 +12,7 @@ The current lab manager detects:
 - libvirt
 - virt-manager
 
-It does not start, stop, create, delete or network containers/VMs.
+It does not start, stop, create, delete or network containers/VMs. The new `kachysec lab --plan` command only produces a reviewable lifecycle plan.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ The intended lab lifecycle is:
 2. validate a lab definition;
 3. show the resources and network boundaries;
 4. ask for explicit confirmation;
-5. create/start the isolated environment;
+5. create/start the isolated environment only after a separate explicit execution action;
 6. run authorized training exercises;
 7. collect results;
 8. tear the environment down.
