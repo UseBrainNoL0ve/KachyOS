@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Evidence milestone
+- Added persistent local baseline snapshots and structural baseline diffing.
+- Added `baseline-diff --latest` for quick before/after inspection.
+- Kept evidence artifacts local by default to reduce accidental host-data publication.
+
 ### Large milestone
 - Added review-only lab orchestration plans with explicit isolation metadata.
 - Batched pacman package resolution to reduce catalog planning overhead.
@@ -18,5 +23,5 @@
 - Additional unit tests and GitHub Actions coverage.
 
 ### Safety
-- Package installation remains an explicit future operation.
+- Package installation remains an explicit, confirmation-gated operation.
 - Lab lifecycle operations remain read-only in the current release.
