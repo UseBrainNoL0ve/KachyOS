@@ -1,13 +1,39 @@
 from __future__ import annotations
 
+import threading
+
+from .assistant import ask_ollama
 from .audit import collect_audit
 from .lab import collect_runtimes, discover_labs
-from .status import collect_status
-from .tool_manager import build_install_plan, inspect_candidates, render_plan
 from .operations import read_operations
+from .status import collect_status
+from .telemetry import collect_telemetry, render_telemetry
+from .telemetry_history import load_snapshots, render_history, save_snapshot
+from .tool_manager import build_install_plan, inspect_candidates, render_plan
 from .tools import catalog, check_tools, summarize_tools
 from .updates import collect_updates
-from .telemetry import collect_telemetry, render_telemetry\nfrom .telemetry_history import load_snapshots, render_history, save_snapshot
+
+APP_STYLE = """
+QWidget { background: #080b10; color: #d7e0ea; font-family: JetBrains Mono, monospace; }
+QMainWindow { background: #080b10; }
+QLabel#Title { color: #7dff9b; font-size: 30px; font-weight: 800; letter-spacing: 2px; }
+QLabel#Subtitle { color: #718096; padding-left: 12px; }
+QLabel#StatusDot { color: #7dff9b; font-weight: 800; }
+QFrame#Card { background: #0d1219; border: 1px solid #1d2a36; border-radius: 10px; }
+QLabel#CardValue { color: #7dff9b; font-size: 25px; font-weight: 800; }
+QLabel#CardCaption { color: #66778a; font-size: 11px; }
+QTextEdit#Panel, QListWidget { background: #0a0f15; border: 1px solid #1b2834; border-radius: 8px; }
+QLineEdit, QComboBox { background: #0b1118; color: #d7e0ea; border: 1px solid #223344; padding: 9px; border-radius: 7px; }
+QLineEdit:focus { border: 1px solid #7dff9b; }
+QPushButton { background: #101923; color: #b9c7d5; border: 1px solid #263746; padding: 9px 16px; border-radius: 7px; }
+QPushButton:hover { background: #14212c; border-color: #7dff9b; color: #7dff9b; }
+QPushButton:disabled { color: #4d5b68; }
+QTabWidget::pane { border: 1px solid #1b2834; border-radius: 8px; }
+QTabBar::tab { background: #0b1118; color: #718096; padding: 10px 16px; margin-right: 2px; }
+QTabBar::tab:selected { color: #7dff9b; border-bottom: 2px solid #7dff9b; }
+QListWidget::item { padding: 7px; border-radius: 5px; }
+QListWidget::item:selected { background: #11231a; color: #7dff9b; }
+"""
 
 
 def dashboard_snapshot() -> dict[str, object]:
@@ -26,7 +52,7 @@ def dashboard_snapshot() -> dict[str, object]:
 
 def launch_gui() -> int:
     try:
-        from PySide6.QtCore import QTimer, Qt
+        from PySide6.QtCore import QObject, QThread, QTimer, Qt, Signal
         from PySide6.QtWidgets import (
             QApplication, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit,
             QListWidget, QListWidgetItem, QMainWindow, QPushButton, QSplitter,
@@ -35,6 +61,23 @@ def launch_gui() -> int:
     except ImportError:
         print("GUI dependency missing: install PySide6, then run 'kachysec gui'.")
         return 2
+
+    class AssistantWorker(QObject):
+        finished = Signal(str)
+        failed = Signal(str)
+
+        def __init__(self, question: str, model: str) -> None:
+            super().__init__()
+            self.question = question
+            self.model = model
+
+        def run(self) -> None:
+            try:
+                response = ask_ollama(self.question, model=self.model)
+            except Exception as exc:
+                self.failed.emit(str(exc))
+            else:
+                self.finished.emit(response.text)
 
     app = QApplication.instance() or QApplication([])
     app.setApplicationName("KachySec")
@@ -52,12 +95,15 @@ def launch_gui() -> int:
     header = QHBoxLayout()
     title = QLabel("KachySec")
     title.setObjectName("Title")
-    subtitle = QLabel("CachyOS security workstation control plane")
+    subtitle = QLabel("SECURITY WORKSTATION // CONTROL PLANE")
     subtitle.setObjectName("Subtitle")
     header.addWidget(title)
     header.addWidget(subtitle)
     header.addStretch()
-    refresh_button = QPushButton("Refresh")
+    status_dot = QLabel("● LOCAL // ONLINE")
+    status_dot.setObjectName("StatusDot")
+    header.addWidget(status_dot)
+    refresh_button = QPushButton("⟳ REFRESH")
     header.addWidget(refresh_button)
     root_layout.addLayout(header)
 
@@ -81,7 +127,33 @@ def launch_gui() -> int:
     overview = QTextEdit()
     overview.setReadOnly(True)
     overview.setObjectName("Panel")
-    tabs.addTab(overview, "Overview")
+    tabs.addTab(overview, "◈  COMMAND")
+
+    assistant_page = QWidget()
+    assistant_layout = QVBoxLayout(assistant_page)
+    assistant_help = QLabel(
+        "Local cybersecurity copilot. It receives a read-only KachySec snapshot and answers without executing commands."
+    )
+    assistant_help.setWordWrap(True)
+    assistant_layout.addWidget(assistant_help)
+
+    assistant_output = QTextEdit()
+    assistant_output.setReadOnly(True)
+    assistant_output.setObjectName("Panel")
+    assistant_output.setPlaceholderText("Assistant responses will appear here.")
+    assistant_layout.addWidget(assistant_output, 1)
+
+    assistant_row = QHBoxLayout()
+    assistant_input = QLineEdit()
+    assistant_input.setPlaceholderText("Ask about an audit warning, tool, lab, recon plan, or security concept…")
+    assistant_model = QLineEdit("qwen2.5:7b")
+    assistant_model.setMaximumWidth(150)
+    assistant_send = QPushButton("▶ RUN QUERY")
+    assistant_row.addWidget(assistant_input, 1)
+    assistant_row.addWidget(assistant_model)
+    assistant_row.addWidget(assistant_send)
+    assistant_layout.addLayout(assistant_row)
+    tabs.addTab(assistant_page, "⌁  COPILOT")
 
     tools_page = QWidget()
     tools_layout = QVBoxLayout(tools_page)
@@ -104,41 +176,42 @@ def launch_gui() -> int:
     splitter.setSizes([620, 560])
     tools_layout.addWidget(splitter, 1)
 
-    plan_button = QPushButton("Build Install Plan")
+    plan_button = QPushButton("⚙ BUILD INSTALL PLAN")
     plan_button.setToolTip("Preview a pacman installation plan. No package changes are made.")
     tools_layout.addWidget(plan_button)
-    tabs.addTab(tools_page, "Tools")
+    tabs.addTab(tools_page, "▣  TOOLKIT")
 
     audit_page = QTextEdit()
     audit_page.setReadOnly(True)
     audit_page.setObjectName("Panel")
-    tabs.addTab(audit_page, "Audit")
+    tabs.addTab(audit_page, "◉  AUDIT")
 
     updates_page = QTextEdit()
     updates_page.setReadOnly(True)
     updates_page.setObjectName("Panel")
-    tabs.addTab(updates_page, "Updates")
+    tabs.addTab(updates_page, "↻  UPDATES")
 
     labs_page = QTextEdit()
     labs_page.setReadOnly(True)
     labs_page.setObjectName("Panel")
-    tabs.addTab(labs_page, "Labs")
+    tabs.addTab(labs_page, "⌬  LABS")
 
     telemetry_page = QTextEdit()
     telemetry_page.setReadOnly(True)
     telemetry_page.setObjectName("Panel")
-    tabs.addTab(telemetry_page, "Telemetry")
+    tabs.addTab(telemetry_page, "⌁  TELEMETRY")
 
     history_page = QTextEdit()
     history_page.setReadOnly(True)
     history_page.setObjectName("Panel")
-    tabs.addTab(history_page, "History")
+    tabs.addTab(history_page, "▤  HISTORY")
 
     root_layout.addWidget(tabs, 1)
     window.setCentralWidget(root)
 
     snapshot: dict[str, object] = {}
     visible_tools: list[dict[str, object]] = []
+    active_threads: list[QThread] = []
 
     def render_tool_detail() -> None:
         row = tool_list.currentRow()
@@ -199,8 +272,8 @@ def launch_gui() -> int:
             f"• Audit: {passed} PASS / {warnings} WARN\n"
             f"• Lab runtimes: {sum(1 for item in snapshot['runtimes'] if item.installed)} available\n\n"
             "SAFE-BY-DESIGN\n"
-            "This dashboard is currently read-only. Refreshing, inspecting tools, and building plans do not install packages, alter services, start labs, or probe networks.\n\n"
-            "WORKFLOW\nDiscover → inspect → plan → explicit confirmation → change → verify"
+            "The dashboard is read-only for discovery and planning. The assistant can explain and suggest reviewable actions but does not execute them.\n\n"
+            "WORKFLOW\nDiscover → inspect → ask → plan → explicit confirmation → change → verify"
         )
 
         current = category.currentText()
@@ -243,7 +316,11 @@ def launch_gui() -> int:
         runtime_lines.extend(("", "No lab lifecycle action was executed."))
         labs_page.setPlainText("\n".join(runtime_lines))
 
-        telemetry_snapshot = collect_telemetry()\n        save_snapshot(telemetry_snapshot)\n        telemetry_page.setPlainText(render_telemetry(telemetry_snapshot) + "\\n\\n" + render_history(load_snapshots(12)))
+        telemetry_snapshot = collect_telemetry()
+        save_snapshot(telemetry_snapshot)
+        telemetry_page.setPlainText(
+            render_telemetry(telemetry_snapshot) + "\n\n" + render_history(load_snapshots(12))
+        )
 
         records = read_operations()
         history_lines = ["LOCAL OPERATION HISTORY", ""]
@@ -259,7 +336,45 @@ def launch_gui() -> int:
         history_lines.append("History is read from local JSONL state and is never committed automatically.")
         history_page.setPlainText("\n".join(history_lines))
 
+    def ask_assistant() -> None:
+        question = assistant_input.text().strip()
+        model = assistant_model.text().strip() or "qwen2.5:7b"
+        if not question:
+            return
+        assistant_input.clear()
+        assistant_output.append(f"\nYOU\n{question}\n")
+        assistant_output.append("ASSISTANT\nWorking with the current KachySec snapshot…")
+        assistant_send.setEnabled(False)
+
+        thread = QThread(window)
+        worker = AssistantWorker(question, model)
+        worker.moveToThread(thread)
+
+        def success(text: str) -> None:
+            assistant_output.append(text)
+
+        def failure(message: str) -> None:
+            assistant_output.append(f"Assistant error: {message}")
+
+        def cleanup() -> None:
+            assistant_send.setEnabled(True)
+            if thread in active_threads:
+                active_threads.remove(thread)
+            worker.deleteLater()
+            thread.deleteLater()
+
+        worker.finished.connect(success)
+        worker.failed.connect(failure)
+        worker.finished.connect(thread.quit)
+        worker.failed.connect(thread.quit)
+        thread.finished.connect(cleanup)
+        active_threads.append(thread)
+        thread.started.connect(worker.run)
+        thread.start()
+
     refresh_button.clicked.connect(render)
+    assistant_send.clicked.connect(ask_assistant)
+    assistant_input.returnPressed.connect(ask_assistant)
     search.textChanged.connect(lambda _text: filter_tools())
     category.currentTextChanged.connect(lambda _text: filter_tools())
     tool_list.currentRowChanged.connect(lambda _row: render_tool_detail())
@@ -270,20 +385,7 @@ def launch_gui() -> int:
     timer.timeout.connect(render)
     timer.start()
 
-    window.setStyleSheet(
-        """
-        QLabel#Title { font-size: 30px; font-weight: 700; }
-        QLabel#Subtitle { padding-left: 12px; color: palette(mid); }
-        QFrame#Card { border: 1px solid palette(mid); border-radius: 12px; }
-        QLabel#CardValue { font-size: 25px; font-weight: 700; }
-        QLabel#CardCaption { color: palette(mid); }
-        QTextEdit#Panel { padding: 12px; border-radius: 8px; }
-        QLineEdit, QComboBox { padding: 9px; border-radius: 8px; }
-        QListWidget { padding: 6px; border-radius: 8px; }
-        QPushButton { padding: 9px 16px; border-radius: 8px; }
-        QTabWidget::pane { border: 0; }
-        """
-    )
+    window.setStyleSheet(APP_STYLE)
 
     render()
     window.show()

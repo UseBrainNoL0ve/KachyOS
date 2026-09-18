@@ -18,6 +18,7 @@ KachySec combines host visibility, security posture checks, a broad dual-use sec
 - **GUI dashboard** — live desktop view over the same Python service layer.
 - **Offensive workflows** — structured support for authorized reconnaissance, enumeration, web/API assessment, vulnerability validation, password auditing, wireless assessment, reverse engineering, and security-research labs.
 - **Lab Manager** — discovery of container/VM runtimes and local lab definitions, plus review-only lifecycle plans.
+- **Security Assistant** — local-first copilot that reads the current KachySec state and helps explain, plan, and learn during security work.
 - **Reproducible packaging** — native Arch/CachyOS PKGBUILD.
 - **CI and tests** — automated Python test suite.
 
@@ -81,7 +82,10 @@ The dashboard refreshes automatically every 10 seconds and also has a manual Ref
 | `kachysec status` | Shows workstation health and tool/runtime summary | No |
 | `kachysec audit` | Runs a lightweight security posture audit | No |
 | `kachysec updates` | Shows pending pacman updates | No |
-| `kachysec telemetry` | Shows local defensive telemetry and saves one local snapshot | No |\n| `kachysec telemetry --history` | Shows recent saved telemetry snapshots | No |
+| `kachysec telemetry` | Shows local host telemetry and saves one local snapshot | No |
+| `kachysec telemetry --history` | Shows recent saved telemetry snapshots | No |
+| `kachysec assistant "..."` | Ask the local security copilot | No |
+| `kachysec assistant --providers` | List available local assistant providers | No |
 | `kachysec baseline-diff --latest` | Compares the two newest saved baseline snapshots | No |
 | `kachysec tools` | Lists the security catalog | No |
 | `kachysec tools --missing` | Lists missing catalog entries | No |
@@ -103,6 +107,7 @@ kachysec tools --plan
 kachysec audit
 kachysec updates
 kachysec telemetry
+kachysec assistant "Explain the most important audit warning and what I should verify next."
 kachysec lab --plan
 kachysec gui
 ```
@@ -144,6 +149,12 @@ Shows container/VM tooling and discovered local lab definitions. The current lif
 
 Shows local host telemetry. The collector is observation-only and does not probe remote hosts or perform remediation.
 
+### Assistant
+
+The Assistant tab provides an always-available local cybersecurity copilot. It receives a read-only KachySec status/audit/tool snapshot, answers asynchronously so the GUI stays responsive, and keeps commands as reviewable suggestions rather than executing them.
+
+The default provider is local Ollama. The model field can be changed without modifying the workstation configuration.
+
 ### History
 
 Shows recent locally recorded privileged operations from `~/.local/state/kachysec/operations.jsonl`. This state stays on the host and is never committed automatically.
@@ -163,8 +174,10 @@ CachyOS host
         ├── tool manager
         ├── operations + local audit trail
         ├── lab manager
+        ├── security assistant
         └── PySide6 GUI
              ├── Overview
+             ├── Assistant
              ├── Tools
              ├── Audit
              ├── Updates
@@ -208,7 +221,9 @@ Tool catalog inclusion is not authorization to use a tool against a third-party 
 - [Operations](docs/OPERATIONS.md)
 - [Lab Manager](docs/LABS.md)
 - [Authorized Offensive Workflows](docs/OFFENSIVE_WORKFLOWS.md)
-- [Telemetry](docs/TELEMETRY.md)\n- [Telemetry history](docs/TELEMETRY_HISTORY.md)
+- [Security Assistant](docs/ASSISTANT.md)
+- [Telemetry](docs/TELEMETRY.md)
+- [Telemetry history](docs/TELEMETRY_HISTORY.md)
 - [Evidence](docs/EVIDENCE.md)
 - [GUI](docs/GUI.md)
 - [CI](docs/CI.md)
@@ -226,7 +241,7 @@ GitHub Actions runs the same test suite on pushes and pull requests.
 
 ## Project status
 
-**Implemented:** Phase 0 baseline, Phase 1 security-core foundations, dual-use security tool catalog/manager, read-only audit and update services, explicit package operations with local history, lab-runtime discovery and review-only planning, defensive telemetry, baseline evidence snapshots/diffing, authorized offensive-workflow documentation, and the PySide6 dashboard.
+**Implemented:** Phase 0 baseline, Phase 1 security-core foundations, dual-use security tool catalog/manager, read-only audit and update services, explicit package operations with local history, lab-runtime discovery and review-only planning, defensive telemetry, baseline evidence snapshots/diffing, authorized offensive-workflow documentation, the PySide6 dashboard, and a local-first security assistant.
 
 **Next engineering layer:** event timeline, evidence/report generation, non-blocking live monitoring, and controlled lab lifecycle execution with verification.
 
