@@ -6,16 +6,17 @@ A modular cybersecurity workstation layer built on top of CachyOS.
 
 ## What this project is
 
-KachySec combines host visibility, security posture checks, a broad security-tool catalog, package planning, explicit package operations, defensive telemetry, a live GUI, operation history, and isolated lab-runtime discovery.
+KachySec combines host visibility, security posture checks, a broad dual-use security-tool catalog, authorized offensive-security workflows, package planning, explicit package operations, defensive telemetry, a live GUI, operation history, and isolated lab-runtime discovery.
 
 - **Host visibility** — baseline inventory, runtime discovery, and package state.
 - **Security posture** — lightweight, read-only audits.
 - **Defensive telemetry** — local load, memory, listening sockets, and process-count observation with local history.
 - **Evidence workflow** — persistent local baseline snapshots and structural diffing.
-- **Tool universe** — networking, web/API security, vulnerability management, OSINT, forensics, reverse engineering, password auditing, wireless, and observability.
+- **Tool universe** — networking, web/API security, vulnerability management, OSINT, forensics, reverse engineering, password auditing, wireless, and observability, covering both defensive and authorized offensive workflows.
 - **Tool Manager** — package-candidate inspection and exact installation planning.
 - **Operations** — explicit, reviewable privileged package execution with a local audit trail.
 - **GUI dashboard** — live desktop view over the same Python service layer.
+- **Offensive workflows** — structured support for authorized reconnaissance, enumeration, web/API assessment, vulnerability validation, password auditing, wireless assessment, reverse engineering, and security-research labs.
 - **Lab Manager** — discovery of container/VM runtimes and local lab definitions, plus review-only lifecycle plans.
 - **Reproducible packaging** — native Arch/CachyOS PKGBUILD.
 - **CI and tests** — automated Python test suite.
@@ -186,7 +187,9 @@ Current automation is deliberately conservative:
 - privileged package changes require an explicit confirmation;
 - no automatic service or firewall changes;
 - telemetry is local observation only;
-- no active remote network probing from the dashboard;
+- no unattended remote attack execution from the dashboard;
+- offensive workflows are intended for owned or explicitly authorized targets;
+- commands should be reviewable before execution and bounded by an explicit scope;
 - lab lifecycle planning is review-only until a separate execution layer is introduced;
 - reports and local state may contain host-specific information and should be reviewed before publication.
 
@@ -204,6 +207,7 @@ Tool catalog inclusion is not authorization to use a tool against a third-party 
 - [Tool Manager](docs/TOOL_MANAGER.md)
 - [Operations](docs/OPERATIONS.md)
 - [Lab Manager](docs/LABS.md)
+- [Authorized Offensive Workflows](docs/OFFENSIVE_WORKFLOWS.md)
 - [Telemetry](docs/TELEMETRY.md)\n- [Telemetry history](docs/TELEMETRY_HISTORY.md)
 - [Evidence](docs/EVIDENCE.md)
 - [GUI](docs/GUI.md)
@@ -222,7 +226,7 @@ GitHub Actions runs the same test suite on pushes and pull requests.
 
 ## Project status
 
-**Implemented:** Phase 0 baseline, Phase 1 security-core foundations, tool catalog/manager, read-only audit and update services, explicit package operations with local history, lab-runtime discovery and review-only planning, defensive telemetry, baseline evidence snapshots/diffing, and the PySide6 dashboard.
+**Implemented:** Phase 0 baseline, Phase 1 security-core foundations, dual-use security tool catalog/manager, read-only audit and update services, explicit package operations with local history, lab-runtime discovery and review-only planning, defensive telemetry, baseline evidence snapshots/diffing, authorized offensive-workflow documentation, and the PySide6 dashboard.
 
 **Next engineering layer:** event timeline, evidence/report generation, non-blocking live monitoring, and controlled lab lifecycle execution with verification.
 
