@@ -13,6 +13,28 @@ from .tool_manager import build_install_plan, inspect_candidates, render_plan
 from .tools import catalog, check_tools, summarize_tools
 from .updates import collect_updates
 
+APP_STYLE = """
+QWidget { background: #080b10; color: #d7e0ea; font-family: JetBrains Mono, monospace; }
+QMainWindow { background: #080b10; }
+QLabel#Title { color: #7dff9b; font-size: 30px; font-weight: 800; letter-spacing: 2px; }
+QLabel#Subtitle { color: #718096; padding-left: 12px; }
+QLabel#StatusDot { color: #7dff9b; font-weight: 800; }
+QFrame#Card { background: #0d1219; border: 1px solid #1d2a36; border-radius: 10px; }
+QLabel#CardValue { color: #7dff9b; font-size: 25px; font-weight: 800; }
+QLabel#CardCaption { color: #66778a; font-size: 11px; }
+QTextEdit#Panel, QListWidget { background: #0a0f15; border: 1px solid #1b2834; border-radius: 8px; }
+QLineEdit, QComboBox { background: #0b1118; color: #d7e0ea; border: 1px solid #223344; padding: 9px; border-radius: 7px; }
+QLineEdit:focus { border: 1px solid #7dff9b; }
+QPushButton { background: #101923; color: #b9c7d5; border: 1px solid #263746; padding: 9px 16px; border-radius: 7px; }
+QPushButton:hover { background: #14212c; border-color: #7dff9b; color: #7dff9b; }
+QPushButton:disabled { color: #4d5b68; }
+QTabWidget::pane { border: 1px solid #1b2834; border-radius: 8px; }
+QTabBar::tab { background: #0b1118; color: #718096; padding: 10px 16px; margin-right: 2px; }
+QTabBar::tab:selected { color: #7dff9b; border-bottom: 2px solid #7dff9b; }
+QListWidget::item { padding: 7px; border-radius: 5px; }
+QListWidget::item:selected { background: #11231a; color: #7dff9b; }
+"""
+
 
 def dashboard_snapshot() -> dict[str, object]:
     """Collect one read-only snapshot for GUI consumers."""
@@ -73,12 +95,15 @@ def launch_gui() -> int:
     header = QHBoxLayout()
     title = QLabel("KachySec")
     title.setObjectName("Title")
-    subtitle = QLabel("CachyOS security workstation control plane")
+    subtitle = QLabel("SECURITY WORKSTATION // CONTROL PLANE")
     subtitle.setObjectName("Subtitle")
     header.addWidget(title)
     header.addWidget(subtitle)
     header.addStretch()
-    refresh_button = QPushButton("Refresh")
+    status_dot = QLabel("● LOCAL // ONLINE")
+    status_dot.setObjectName("StatusDot")
+    header.addWidget(status_dot)
+    refresh_button = QPushButton("⟳ REFRESH")
     header.addWidget(refresh_button)
     root_layout.addLayout(header)
 
@@ -102,7 +127,7 @@ def launch_gui() -> int:
     overview = QTextEdit()
     overview.setReadOnly(True)
     overview.setObjectName("Panel")
-    tabs.addTab(overview, "Overview")
+    tabs.addTab(overview, "◈  COMMAND")
 
     assistant_page = QWidget()
     assistant_layout = QVBoxLayout(assistant_page)
@@ -123,12 +148,12 @@ def launch_gui() -> int:
     assistant_input.setPlaceholderText("Ask about an audit warning, tool, lab, recon plan, or security concept…")
     assistant_model = QLineEdit("qwen2.5:7b")
     assistant_model.setMaximumWidth(150)
-    assistant_send = QPushButton("Ask")
+    assistant_send = QPushButton("▶ RUN QUERY")
     assistant_row.addWidget(assistant_input, 1)
     assistant_row.addWidget(assistant_model)
     assistant_row.addWidget(assistant_send)
     assistant_layout.addLayout(assistant_row)
-    tabs.addTab(assistant_page, "Assistant")
+    tabs.addTab(assistant_page, "⌁  COPILOT")
 
     tools_page = QWidget()
     tools_layout = QVBoxLayout(tools_page)
@@ -151,35 +176,35 @@ def launch_gui() -> int:
     splitter.setSizes([620, 560])
     tools_layout.addWidget(splitter, 1)
 
-    plan_button = QPushButton("Build Install Plan")
+    plan_button = QPushButton("⚙ BUILD INSTALL PLAN")
     plan_button.setToolTip("Preview a pacman installation plan. No package changes are made.")
     tools_layout.addWidget(plan_button)
-    tabs.addTab(tools_page, "Tools")
+    tabs.addTab(tools_page, "▣  TOOLKIT")
 
     audit_page = QTextEdit()
     audit_page.setReadOnly(True)
     audit_page.setObjectName("Panel")
-    tabs.addTab(audit_page, "Audit")
+    tabs.addTab(audit_page, "◉  AUDIT")
 
     updates_page = QTextEdit()
     updates_page.setReadOnly(True)
     updates_page.setObjectName("Panel")
-    tabs.addTab(updates_page, "Updates")
+    tabs.addTab(updates_page, "↻  UPDATES")
 
     labs_page = QTextEdit()
     labs_page.setReadOnly(True)
     labs_page.setObjectName("Panel")
-    tabs.addTab(labs_page, "Labs")
+    tabs.addTab(labs_page, "⌬  LABS")
 
     telemetry_page = QTextEdit()
     telemetry_page.setReadOnly(True)
     telemetry_page.setObjectName("Panel")
-    tabs.addTab(telemetry_page, "Telemetry")
+    tabs.addTab(telemetry_page, "⌁  TELEMETRY")
 
     history_page = QTextEdit()
     history_page.setReadOnly(True)
     history_page.setObjectName("Panel")
-    tabs.addTab(history_page, "History")
+    tabs.addTab(history_page, "▤  HISTORY")
 
     root_layout.addWidget(tabs, 1)
     window.setCentralWidget(root)
@@ -360,20 +385,7 @@ def launch_gui() -> int:
     timer.timeout.connect(render)
     timer.start()
 
-    window.setStyleSheet(
-        """
-        QLabel#Title { font-size: 30px; font-weight: 700; }
-        QLabel#Subtitle { padding-left: 12px; color: palette(mid); }
-        QFrame#Card { border: 1px solid palette(mid); border-radius: 12px; }
-        QLabel#CardValue { font-size: 25px; font-weight: 700; }
-        QLabel#CardCaption { color: palette(mid); }
-        QTextEdit#Panel { padding: 12px; border-radius: 8px; }
-        QLineEdit, QComboBox { padding: 9px; border-radius: 8px; }
-        QListWidget { padding: 6px; border-radius: 8px; }
-        QPushButton { padding: 9px 16px; border-radius: 8px; }
-        QTabWidget::pane { border: 0; }
-        """
-    )
+    window.setStyleSheet(APP_STYLE)
 
     render()
     window.show()
