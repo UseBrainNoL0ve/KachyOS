@@ -4,6 +4,7 @@ from .audit import collect_audit
 from .lab import collect_runtimes, discover_labs
 from .status import collect_status
 from .tool_manager import build_install_plan, inspect_candidates, render_plan
+from .operations import read_operations
 from .tools import catalog, check_tools, summarize_tools
 from .updates import collect_updates
 
@@ -122,6 +123,11 @@ def launch_gui() -> int:
     labs_page.setObjectName("Panel")
     tabs.addTab(labs_page, "Labs")
 
+    history_page = QTextEdit()
+    history_page.setReadOnly(True)
+    history_page.setObjectName("Panel")
+    tabs.addTab(history_page, "History")
+
     root_layout.addWidget(tabs, 1)
     window.setCentralWidget(root)
 
@@ -230,6 +236,20 @@ def launch_gui() -> int:
             runtime_lines.append("• No local lab definitions discovered.")
         runtime_lines.extend(("", "No lab lifecycle action was executed."))
         labs_page.setPlainText("\n".join(runtime_lines))
+
+        records = read_operations()
+        history_lines = ["LOCAL OPERATION HISTORY", ""]
+        if not records:
+            history_lines.append("No recorded operations yet.")
+        for record in reversed(records[-50:]):
+            history_lines.append(f"[{record.get('returncode')}] {record.get('operation')} — {record.get('started_at')}")
+            history_lines.append("  " + " ".join(str(x) for x in record.get("command", [])))
+            output = str(record.get("output", ""))
+            if output:
+                history_lines.append("  " + output.splitlines()[0])
+        history_lines.append("")
+        history_lines.append("History is read from local JSONL state and is never committed automatically.")
+        history_page.setPlainText("\n".join(history_lines))
 
     refresh_button.clicked.connect(render)
     search.textChanged.connect(lambda _text: filter_tools())
