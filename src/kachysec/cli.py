@@ -9,6 +9,7 @@ from .operations import run_privileged
 from .lab import build_lab_plans, collect_runtimes, discover_labs, render_lab_plans, render_lab_status
 from .status import collect_status, render_status
 from .tool_manager import build_install_plan, render_plan
+from .telemetry import collect_telemetry, render_telemetry
 from .tools import catalog, check_tools
 from .updates import collect_updates, render_updates
 
@@ -27,6 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("status", help="Show workstation health and tool summary")
     subparsers.add_parser("audit", help="Run a read-only security posture audit")
     subparsers.add_parser("updates", help="Show pending package updates without modifying the host")
+    subparsers.add_parser("telemetry", help="Show local defensive host telemetry (read-only)")
     lab = subparsers.add_parser("lab", help="Inspect local lab runtimes and definitions")
     lab.add_argument("--plan", action="store_true", help="Build a review-only lab lifecycle plan")
     subparsers.add_parser("gui", help="Launch the optional PySide6 security dashboard")
@@ -64,6 +66,10 @@ def main() -> int:
 
     if args.command == "updates":
         print(render_updates(collect_updates()), end="")
+        return 0
+
+    if args.command == "telemetry":
+        print(render_telemetry(collect_telemetry()))
         return 0
 
     if args.command == "lab":
