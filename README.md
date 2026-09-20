@@ -6,16 +6,17 @@ A modular cybersecurity workstation layer built on top of CachyOS.
 
 ## What this project is
 
-KachySec combines host visibility, security posture checks, a broad security-tool catalog, package planning, explicit package operations, defensive telemetry, a live GUI, operation history, and isolated lab-runtime discovery.
+KachySec combines host visibility, security posture checks, a broad dual-use security-tool catalog, authorized offensive-security workflows, package planning, explicit package operations, defensive telemetry, a live GUI, operation history, and isolated lab-runtime discovery.
 
 - **Host visibility** — baseline inventory, runtime discovery, and package state.
 - **Security posture** — lightweight, read-only audits.
 - **Defensive telemetry** — local load, memory, listening sockets, and process-count observation with local history.
 - **Evidence workflow** — persistent local baseline snapshots and structural diffing.
-- **Tool universe** — networking, web/API security, vulnerability management, OSINT, forensics, reverse engineering, password auditing, wireless, and observability.
+- **Tool universe** — networking, web/API security, vulnerability management, OSINT, forensics, reverse engineering, password auditing, wireless, and observability, covering both defensive and authorized offensive workflows.
 - **Tool Manager** — package-candidate inspection and exact installation planning.
 - **Operations** — explicit, reviewable privileged package execution with a local audit trail.
 - **GUI dashboard** — live desktop view over the same Python service layer.
+- **Offensive workflows** — structured support for authorized reconnaissance, enumeration, web/API assessment, vulnerability validation, password auditing, wireless assessment, reverse engineering, and security-research labs.
 - **Lab Manager** — discovery of container/VM runtimes and local lab definitions, plus review-only lifecycle plans.
 - **Reproducible packaging** — native Arch/CachyOS PKGBUILD.
 - **CI and tests** — automated Python test suite.
@@ -80,7 +81,8 @@ The dashboard refreshes automatically every 10 seconds and also has a manual Ref
 | `kachysec status` | Shows workstation health and tool/runtime summary | No |
 | `kachysec audit` | Runs a lightweight security posture audit | No |
 | `kachysec updates` | Shows pending pacman updates | No |
-| `kachysec telemetry` | Shows local defensive telemetry and saves one local snapshot | No |\n| `kachysec telemetry --history` | Shows recent saved telemetry snapshots | No |
+| `kachysec telemetry` | Shows local defensive telemetry and saves one local snapshot | No |
+| `kachysec telemetry --history` | Shows recent saved telemetry snapshots | No |
 | `kachysec baseline-diff --latest` | Compares the two newest saved baseline snapshots | No |
 | `kachysec tools` | Lists the security catalog | No |
 | `kachysec tools --missing` | Lists missing catalog entries | No |
@@ -90,6 +92,7 @@ The dashboard refreshes automatically every 10 seconds and also has a manual Ref
 | `kachysec lab` | Discovers local lab runtimes and definitions | No |
 | `kachysec lab --plan` | Builds a review-only lab lifecycle plan | No |
 | `kachysec gui` | Opens the optional desktop dashboard | No |
+| `kachysec assistant "question"` | Consults the local cybersecurity copilot | No |
 
 ## First-run workflow
 
@@ -121,11 +124,19 @@ The install command asks for the literal confirmation token `INSTALL`, then invo
 
 Live workstation coverage, update count, audit state, runtime availability, and the current safe-by-design workflow.
 
+### Command Center
+
+The Command Center presents the workstation as a local security operations console: live tool coverage, audit state, pending updates, lab runtime availability, the operator workflow pipeline, security boundary, and evidence/telemetry state.
+
 ### Tools
 
 Search by name, category, purpose, or binary. Filter by category and select a tool to inspect its purpose, executable, scope, installed state, package candidates, and verification command.
 
 **Build Install Plan** previews the exact package operation without installing anything.
+
+### Assistant
+
+The local Security Assistant can use the current read-only workstation context to explain tools, audit findings, expected output, verification steps, and security concepts. It does not execute commands or select targets.
 
 ### Audit
 
@@ -141,7 +152,7 @@ Shows container/VM tooling and discovered local lab definitions. The current lif
 
 ### Telemetry
 
-Shows local host telemetry. The collector is observation-only and does not probe remote hosts or perform remediation.
+Shows local host telemetry and recent bounded history. The collector is observation-only and does not probe remote hosts or perform remediation.
 
 ### History
 
@@ -157,13 +168,16 @@ CachyOS host
         ├── status
         ├── audit
         ├── updates
-        ├── telemetry
+        ├── telemetry + history
         ├── tool catalog
         ├── tool manager
         ├── operations + local audit trail
         ├── lab manager
+        ├── authorized workflow model
+        ├── local security assistant
         └── PySide6 GUI
-             ├── Overview
+             ├── Command Center
+             ├── Assistant
              ├── Tools
              ├── Audit
              ├── Updates
@@ -186,7 +200,9 @@ Current automation is deliberately conservative:
 - privileged package changes require an explicit confirmation;
 - no automatic service or firewall changes;
 - telemetry is local observation only;
-- no active remote network probing from the dashboard;
+- no unattended remote attack execution from the dashboard;
+- offensive workflows are intended for owned or explicitly authorized targets;
+- commands should be reviewable before execution and bounded by an explicit scope;
 - lab lifecycle planning is review-only until a separate execution layer is introduced;
 - reports and local state may contain host-specific information and should be reviewed before publication.
 
@@ -204,9 +220,12 @@ Tool catalog inclusion is not authorization to use a tool against a third-party 
 - [Tool Manager](docs/TOOL_MANAGER.md)
 - [Operations](docs/OPERATIONS.md)
 - [Lab Manager](docs/LABS.md)
-- [Telemetry](docs/TELEMETRY.md)\n- [Telemetry history](docs/TELEMETRY_HISTORY.md)
+- [Authorized Offensive Workflows](docs/OFFENSIVE_WORKFLOWS.md)
+- [Telemetry](docs/TELEMETRY.md)
+- [Telemetry history](docs/TELEMETRY_HISTORY.md)
 - [Evidence](docs/EVIDENCE.md)
 - [GUI](docs/GUI.md)
+- [Assistant](docs/ASSISTANT.md)
 - [CI](docs/CI.md)
 - [Package Manager](docs/PACKAGE_MANAGER.md)
 
@@ -222,9 +241,9 @@ GitHub Actions runs the same test suite on pushes and pull requests.
 
 ## Project status
 
-**Implemented:** Phase 0 baseline, Phase 1 security-core foundations, tool catalog/manager, read-only audit and update services, explicit package operations with local history, lab-runtime discovery and review-only planning, defensive telemetry, baseline evidence snapshots/diffing, and the PySide6 dashboard.
+**Implemented:** Phase 0 baseline, Phase 1 security-core foundations, dual-use security tool catalog/manager, read-only audit and update services, explicit package operations with local history, lab-runtime discovery and review-only planning, defensive telemetry/history, baseline evidence snapshots/diffing, authorized offensive-workflow documentation, local Security Assistant, and the PySide6 dashboard.
 
-**Next engineering layer:** event timeline, evidence/report generation, non-blocking live monitoring, and controlled lab lifecycle execution with verification.
+**Next engineering layer:** event timeline, scope-aware offensive workflow profiles, evidence/report generation, non-blocking live monitoring, and controlled lab lifecycle execution with verification.
 
 ## License
 
