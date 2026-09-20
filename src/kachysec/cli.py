@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 from pathlib import Path
 
+from .assistant import ask_ollama, available_providers, render_response
 from .audit import collect_audit, render_audit
 from .baseline import collect, to_json, to_markdown
 from .evidence import diff_baselines, latest_baselines, load_baseline, render_diff, save_baseline
 from .lab import build_lab_plans, collect_runtimes, discover_labs, render_lab_plans, render_lab_status
 from .operations import run_privileged
 from .status import collect_status, render_status
-from .telemetry import collect_telemetry, render_telemetry\nfrom .telemetry_history import load_snapshots, render_history, save_snapshot
+from .telemetry import collect_telemetry, render_telemetry
+from .telemetry_history import load_snapshots, render_history, save_snapshot
 from .tool_manager import build_install_plan, render_plan
 from .tools import catalog, check_tools
 from .updates import collect_updates, render_updates
@@ -29,7 +32,10 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("status", help="Show workstation health and tool summary")
     subparsers.add_parser("audit", help="Run a read-only security posture audit")
     subparsers.add_parser("updates", help="Show pending package updates without modifying the host")
-    telemetry = subparsers.add_parser("telemetry", help="Show local defensive host telemetry (read-only)")\n    telemetry.add_argument("--history", action="store_true", help="Show recent locally saved telemetry snapshots")\n    telemetry.add_argument("--limit", type=int, default=60, help="Maximum telemetry history entries to display")
+
+    telemetry = subparsers.add_parser("telemetry", help="Show local host telemetry (read-only)")
+    telemetry.add_argument("--history", action="store_true", help="Show recent locally saved telemetry snapshots")
+    telemetry.add_argument("--limit", type=int, default=60, help="Maximum telemetry history entries to display")
 
     baseline_diff = subparsers.add_parser("baseline-diff", help="Compare two saved baseline JSON snapshots")
     baseline_diff.add_argument("before", type=Path, nargs="?")
@@ -38,6 +44,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     lab = subparsers.add_parser("lab", help="Inspect local lab runtimes and definitions")
     lab.add_argument("--plan", action="store_true", help="Build a review-only lab lifecycle plan")
+
+    assistant = subparsers.add_parser("assistant", help="Ask the local cybersecurity copilot")
+    assistant.add_argument("question", nargs="?", help="Question for the assistant")
+    assistant.add_argument("--model", default="qwen2.5:7b", help="Local Ollama model name")
+    assistant.add_argument("--providers", action="store_true", help="List available local assistant providers")
+
     subparsers.add_parser("gui", help="Launch the optional PySide6 security dashboard")
 
     tools = subparsers.add_parser("tools", help="Browse the security tool catalog")
@@ -98,7 +110,12 @@ def main() -> int:
         return 0
 
     if args.command == "telemetry":
-        print(render_telemetry(collect_telemetry()))
+        snapshot = collect_telemetry()
+        save_snapshot(snapshot)
+        if args.history:
+            print(render_history(load_snapshots(args.limit)), end="")
+        else:
+            print(render_telemetry(snapshot))
         return 0
 
     if args.command == "lab":
@@ -107,6 +124,25 @@ def main() -> int:
             print(render_lab_plans(build_lab_plans(labs)), end="")
         else:
             print(render_lab_status(collect_runtimes(), labs), end="")
+        return 0
+
+    if args.command == "assistant":
+        if args.providers:
+            providers = list(available_providers())
+            print("Available providers:")
+            for provider in providers:
+                print(f"- {provider}")
+            if not providers:
+                print("- none (install a local provider such as Ollama)")
+            return 0
+        if not args.question:
+            print("Provide a question, or use --providers.")
+            return 2
+        try:
+            print(render_response(ask_ollama(args.question, model=args.model)), end="")
+        except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+            print(f"Assistant error: {exc}")
+            return 2
         return 0
 
     if args.command == "gui":
