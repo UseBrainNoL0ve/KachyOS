@@ -33,6 +33,9 @@ QTabBar::tab { background: #0b1118; color: #718096; padding: 10px 16px; margin-r
 QTabBar::tab:selected { color: #7dff9b; border-bottom: 2px solid #7dff9b; }
 QListWidget::item { padding: 7px; border-radius: 5px; }
 QListWidget::item:selected { background: #11231a; color: #7dff9b; }
+QLabel#Section { color: #5f7182; font-size: 10px; font-weight: 800; letter-spacing: 2px; }
+QLabel#Signal { color: #7dff9b; font-weight: 700; }
+QTextEdit#Console { background: #06090d; border: 1px solid #17232e; color: #91a4b5; font-size: 11px; }
 """
 
 
@@ -124,10 +127,24 @@ def launch_gui() -> int:
     root_layout.addLayout(cards)
 
     tabs = QTabWidget()
+    overview_page = QWidget()
+    overview_layout = QVBoxLayout(overview_page)
+    section = QLabel("LIVE OPERATIONS // SECURITY CONTROL")
+    section.setObjectName("Section")
+    overview_layout.addWidget(section)
+    signal = QLabel("● TELEMETRY LINK  ·  LOCAL HOST  ·  READ-ONLY")
+    signal.setObjectName("Signal")
+    overview_layout.addWidget(signal)
     overview = QTextEdit()
     overview.setReadOnly(True)
     overview.setObjectName("Panel")
-    tabs.addTab(overview, "◈  COMMAND")
+    overview_layout.addWidget(overview, 1)
+    console = QTextEdit()
+    console.setReadOnly(True)
+    console.setObjectName("Console")
+    console.setMaximumHeight(120)
+    overview_layout.addWidget(console)
+    tabs.addTab(overview_page, "◈  COMMAND")
 
     assistant_page = QWidget()
     assistant_layout = QVBoxLayout(assistant_page)
@@ -264,16 +281,26 @@ def launch_gui() -> int:
         card_values["runtime"].setText(str(sum(1 for item in snapshot["runtimes"] if item.installed)))
 
         overview.setPlainText(
-            "KACHYSEC / WORKSTATION OVERVIEW\n\n"
-            "A modular security layer over the existing CachyOS desktop.\n\n"
-            "LIVE STATE\n"
-            f"• Tool coverage: {summary['installed']} installed / {summary['total']} catalogued\n"
-            f"• Pending updates: {len(snapshot['updates'])}\n"
-            f"• Audit: {passed} PASS / {warnings} WARN\n"
-            f"• Lab runtimes: {sum(1 for item in snapshot['runtimes'] if item.installed)} available\n\n"
-            "SAFE-BY-DESIGN\n"
-            "The dashboard is read-only for discovery and planning. The assistant can explain and suggest reviewable actions but does not execute them.\n\n"
-            "WORKFLOW\nDiscover → inspect → ask → plan → explicit confirmation → change → verify"
+            "KACHYSEC // SECURITY OPERATIONS CENTER\n"
+            "════════════════════════════════════════════════════════════\n\n"
+            "HOST  ·  CACHYOS\n"
+            f"TOOLS       {summary['installed']:>3} / {summary['total']:<3} online in catalog\n"
+            f"AUDIT       {passed:>3} PASS   {warnings:>3} WARN\n"
+            f"UPDATES     {len(snapshot['updates']):>3} pending\n"
+            f"LABS        {sum(1 for item in snapshot['runtimes'] if item.installed):>3} runtimes available\n\n"
+            "OPERATOR PIPELINE\n"
+            "01 DISCOVER    02 INSPECT    03 COPILOT    04 PLAN\n"
+            "05 AUTHORIZE   06 EXECUTE    07 VERIFY     08 EVIDENCE\n\n"
+            "SECURITY BOUNDARY\n"
+            "Discovery and planning are read-only. State-changing or network-active work remains explicit, scoped, and operator-controlled."
+        )
+        console.setPlainText(
+            "[KACHYSEC] local control plane initialized\n"
+            f"[TOOLS] catalog={summary['total']} installed={summary['installed']}\n"
+            f"[AUDIT] pass={passed} warn={warnings}\n"
+            f"[UPDATES] pending={len(snapshot['updates'])}\n"
+            "[COPILOT] advisory mode / command execution disabled\n"
+            "[EVIDENCE] local telemetry + operation history available"
         )
 
         current = category.currentText()
