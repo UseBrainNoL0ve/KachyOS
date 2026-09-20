@@ -37,7 +37,7 @@
 - Evidence bundles
 - Markdown/JSON/HTML security reports
 
-### Phase 3 — SOC-lite monitoring
+### Phase 3 — SOC-lite monitoring\n\n**Started:** local telemetry history is now available to the CLI and GUI.
 - Event timeline
 - Process/socket detail views
 - Bounded local event history

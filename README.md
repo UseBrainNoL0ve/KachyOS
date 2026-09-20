@@ -10,7 +10,7 @@ KachySec combines host visibility, security posture checks, a broad security-too
 
 - **Host visibility** — baseline inventory, runtime discovery, and package state.
 - **Security posture** — lightweight, read-only audits.
-- **Defensive telemetry** — local load, memory, listening sockets, and process-count observation.
+- **Defensive telemetry** — local load, memory, listening sockets, and process-count observation with local history.
 - **Evidence workflow** — persistent local baseline snapshots and structural diffing.
 - **Tool universe** — networking, web/API security, vulnerability management, OSINT, forensics, reverse engineering, password auditing, wireless, and observability.
 - **Tool Manager** — package-candidate inspection and exact installation planning.
@@ -80,7 +80,7 @@ The dashboard refreshes automatically every 10 seconds and also has a manual Ref
 | `kachysec status` | Shows workstation health and tool/runtime summary | No |
 | `kachysec audit` | Runs a lightweight security posture audit | No |
 | `kachysec updates` | Shows pending pacman updates | No |
-| `kachysec telemetry` | Shows local defensive telemetry | No |
+| `kachysec telemetry` | Shows local defensive telemetry and saves one local snapshot | No |\n| `kachysec telemetry --history` | Shows recent saved telemetry snapshots | No |
 | `kachysec baseline-diff --latest` | Compares the two newest saved baseline snapshots | No |
 | `kachysec tools` | Lists the security catalog | No |
 | `kachysec tools --missing` | Lists missing catalog entries | No |
@@ -204,7 +204,7 @@ Tool catalog inclusion is not authorization to use a tool against a third-party 
 - [Tool Manager](docs/TOOL_MANAGER.md)
 - [Operations](docs/OPERATIONS.md)
 - [Lab Manager](docs/LABS.md)
-- [Telemetry](docs/TELEMETRY.md)
+- [Telemetry](docs/TELEMETRY.md)\n- [Telemetry history](docs/TELEMETRY_HISTORY.md)
 - [Evidence](docs/EVIDENCE.md)
 - [GUI](docs/GUI.md)
 - [CI](docs/CI.md)
@@ -224,7 +224,7 @@ GitHub Actions runs the same test suite on pushes and pull requests.
 
 **Implemented:** Phase 0 baseline, Phase 1 security-core foundations, tool catalog/manager, read-only audit and update services, explicit package operations with local history, lab-runtime discovery and review-only planning, defensive telemetry, baseline evidence snapshots/diffing, and the PySide6 dashboard.
 
-**Next engineering layer:** persistent telemetry/event history, baseline diffing, evidence/report generation, non-blocking live monitoring, and controlled lab lifecycle execution with verification.
+**Next engineering layer:** event timeline, evidence/report generation, non-blocking live monitoring, and controlled lab lifecycle execution with verification.
 
 ## License
 

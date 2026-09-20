@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-### Evidence milestone
+### SOC-lite telemetry milestone\n- Added bounded local telemetry history under `~/.local/state/kachysec/telemetry/`.\n- Added `kachysec telemetry --history` and GUI history rendering.\n- Kept telemetry storage local and observation-only.\n\n### Evidence milestone
 - Added persistent local baseline snapshots and structural baseline diffing.
 - Added `baseline-diff --latest` for quick before/after inspection.
 - Kept evidence artifacts local by default to reduce accidental host-data publication.
