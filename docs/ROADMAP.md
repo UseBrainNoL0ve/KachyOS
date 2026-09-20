@@ -29,22 +29,29 @@
 
 ### Phase 2 — Evidence and change verification
 
-**Started:** baseline snapshot storage and structural diffing are implemented.
-- Persistent telemetry history
+**Started:** baseline snapshot storage, structural diffing, and persistent telemetry history are implemented.
 - Baseline snapshot storage
 - Baseline diff engine
 - Post-operation verification
 - Evidence bundles
 - Markdown/JSON/HTML security reports
 
-### Phase 3 — SOC-lite monitoring\n\n**Started:** local telemetry history is now available to the CLI and GUI.
+### Phase 3 — SOC-lite monitoring
+
+**Started:** local telemetry history is available to the CLI and GUI.
 - Event timeline
 - Process/socket detail views
 - Bounded local event history
 - Non-blocking live GUI monitoring
 - Alert-oriented observations without automatic remediation
+- Authorized offensive workflow profiles and scope-aware execution plans
 
 ### Phase 4 — Controlled lab lifecycle
+- Authorized offensive workflow profiles
+- Target-scope declaration and preflight checks
+- Reviewable reconnaissance/enumeration plans
+- Controlled vulnerability-validation workflows
+- Exploit-development/research lab templates
 - Explicit lab execution plans
 - Local/isolated container lifecycle
 - VM lifecycle with explicit boundaries

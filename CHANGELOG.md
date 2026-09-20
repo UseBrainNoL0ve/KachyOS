@@ -2,7 +2,18 @@
 
 ## Unreleased
 
-### SOC-lite telemetry milestone\n- Added bounded local telemetry history under `~/.local/state/kachysec/telemetry/`.\n- Added `kachysec telemetry --history` and GUI history rendering.\n- Kept telemetry storage local and observation-only.\n\n### Evidence milestone
+### Authorized offensive-security milestone
+- Documented dual-use defensive and explicitly authorized offensive-security workflows.
+- Added target-scope and operator-confirmation boundaries.
+- Added workflow families for reconnaissance, enumeration, web/API assessment, vulnerability validation, password auditing, wireless assessment, reverse engineering, and security-research labs.
+- Kept autonomous exploitation, persistence, credential theft, destructive actions, and indiscriminate remote targeting outside the control plane.
+
+### SOC-lite telemetry milestone
+- Added bounded local telemetry history under `~/.local/state/kachysec/telemetry/`.
+- Added `kachysec telemetry --history` and GUI history rendering.
+- Kept telemetry storage local and observation-only.
+
+### Evidence milestone
 - Added persistent local baseline snapshots and structural baseline diffing.
 - Added `baseline-diff --latest` for quick before/after inspection.
 - Kept evidence artifacts local by default to reduce accidental host-data publication.
@@ -25,3 +36,4 @@
 ### Safety
 - Package installation remains an explicit, confirmation-gated operation.
 - Lab lifecycle operations remain read-only in the current release.
+- Offensive workflows require owned or explicitly authorized targets and reviewable scope.
